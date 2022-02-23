@@ -1,0 +1,36 @@
+{
+  "name": "use-async-query",
+  "version": "0.0.1",
+  "description": "Apollo Client's useQuery API for any async function",
+  "main": "index.js",
+  "scripts": {
+    "test": "jest",
+    "build": "tsc"
+  },
+  "author": "Alasdair McLeay",
+  "license": "ISC",
+  "keywords": [
+    "apollo",
+    "apollo-client",
+    "react"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/penx/use-async-query.git"
+  },
+  "bugs": {
+    "url": "https://github.com/penx/use-async-query/issues"
+  },
+  "homepage": "https://github.com/penx/use-async-query#readme",
+  "peerDependencies": {
+    "react": "*"
+  },
+  "devDependencies": {
+    "@babel/preset-env": "^7.16.11",
+    "@babel/preset-typescript": "^7.16.7",
+    "@testing-library/react-hooks": "^7.0.2",
+    "jest": "^27.5.1",
+    "react-test-renderer": "^17.0.2",
+    "typescript": "^4.5.5"
+  }
+}
