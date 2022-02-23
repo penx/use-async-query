@@ -13,10 +13,10 @@ npm i use-async-query
 ### Example usage with Firestore
 
 ```ts
-import firestore from '@firebase/firestore';
-import { useAsyncQuery } from 'use-async-query';
+import firestore from '@firebase/firestore'
+import { useAsyncQuery } from 'use-async-query'
 
-import { Loading, Error, Results } from './components';
+import { Loading, Error, Results } from './components'
 
 const myQuery = (variables) => firestore()
   .collection('myCollection')
