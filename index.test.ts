@@ -1,5 +1,5 @@
 import {renderHook, act} from '@testing-library/react-hooks';
-import useQuery from '.';
+import {useAsyncQuery} from '.';
 
 class Deferred<T> {
   promise: Promise<T>;
@@ -14,7 +14,7 @@ class Deferred<T> {
   }
 }
 
-describe('useQuery', () => {
+describe('useAsyncQuery', () => {
   it('should handle queries completing in series', async () => {
     const deferred1 = new Deferred();
     const deferred2 = new Deferred();
@@ -29,7 +29,7 @@ describe('useQuery', () => {
       }
     };
 
-    let {result, rerender} = renderHook(options => useQuery(query, options), {
+    let {result, rerender} = renderHook(options => useAsyncQuery(query, options), {
       initialProps: {variables: 'run1'},
     });
 
@@ -76,7 +76,7 @@ describe('useQuery', () => {
       }
     };
 
-    let {result, rerender} = renderHook(options => useQuery(query, options), {
+    let {result, rerender} = renderHook(options => useAsyncQuery(query, options), {
       initialProps: {variables: 'run1'},
     });
 
@@ -123,7 +123,7 @@ describe('useQuery', () => {
       }
     };
 
-    let {result, rerender} = renderHook(options => useQuery(query, options), {
+    let {result, rerender} = renderHook(options => useAsyncQuery(query, options), {
       initialProps: {variables: 'run1'},
     });
 
@@ -166,7 +166,7 @@ describe('useQuery', () => {
       return deferred1.promise;
     };
 
-    let {result} = renderHook(options => useQuery(query, options), {
+    let {result} = renderHook(options => useAsyncQuery(query, options), {
       initialProps: {variables: 'run1', onError: errorLog},
     });
 
@@ -198,7 +198,7 @@ describe('useQuery', () => {
       }
     };
 
-    let {result, rerender} = renderHook(options => useQuery(query, options), {
+    let {result, rerender} = renderHook(options => useAsyncQuery(query, options), {
       initialProps: {variables: 'run1', onError: errorLog},
     });
 

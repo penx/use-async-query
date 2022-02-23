@@ -14,7 +14,7 @@ npm i use-async-query
 
 ```ts
 import firestore from '@firebase/firestore';
-import useQuery from 'use-query';
+import { useAsyncQuery } from 'use-async-query';
 
 import { Loading, Error, Results } from './components';
 
@@ -24,7 +24,7 @@ const myQuery = (variables) => firestore()
   .get()
 
 const MyComponent = () => {
-  const {loading, error, data} = useQuery(myQuery, { variables: { example: 'test' }})
+  const {loading, error, data} = useAsyncQuery(myQuery, { variables: { example: 'test' }})
 
   return <>
     {loading && <Loading />}

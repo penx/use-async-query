@@ -5,7 +5,7 @@ import {useState, useEffect} from 'react';
  * [Apollo's useQuery hook](https://www.apollographql.com/docs/react/data/queries/#usequery-api),
  * but with a "query" being any async function rather than GQL statement.
  */
-export const useQuery = <Data, Variables>(
+export const useAsyncQuery = <Data, Variables>(
   query: (variables: Variables) => Promise<Data>,
   options: {
     variables: Variables; //TODO: call signature without Variables, optional Options
@@ -56,4 +56,4 @@ export const useQuery = <Data, Variables>(
   return {loading, error, data};
 };
 
-export default useQuery;
+export default useAsyncQuery;
