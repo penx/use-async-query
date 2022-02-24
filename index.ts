@@ -1,4 +1,4 @@
-import {useState, useEffect} from 'react';
+import { useState, useRef, useMemo } from "react";
 
 /**
  * Mirrors the functionality of
@@ -12,37 +12,42 @@ export const useAsyncQuery = <Data, Variables>(
     skip?: boolean;
     onCompleted?: (data: Data) => void;
     onError?: (error: Error) => void;
-  },
-): {loading: boolean; error: Error | null; data: Data | null} => {
-  const {variables, skip, onCompleted, onError} = options || {};
+  }
+): { loading: boolean; error: Error | null; data: Data | null } => {
+  const { variables, skip, onCompleted, onError } = options || {};
 
-  const [data, setData] = useState<Data | null>(null);
-  const [loading, setLoading] = useState<boolean>(!skip);
-  const [error, setError] = useState(null);
+  const data = useRef<Data>(null);
+  const loading = useRef<boolean>(!skip);
+  const error = useRef(null);
+  const cancelLast = useRef<() => void>();
+  const [, forceUpdate] = useState(0);
 
-  useEffect(() => {
+  cancelLast.current = useMemo(() => {
+    cancelLast.current?.();
     let isLatest = true;
     if (skip) {
-      setLoading(false);
-      setError(null);
+      loading.current = false;
+      error.current = null;
     } else {
-      setData(null);
-      setLoading(true);
-      setError(null);
+      data.current = null;
+      loading.current = true;
+      error.current = null;
       query(variables)
-        .then(response => {
+        .then((response) => {
           if (isLatest) {
-            setData(response);
-            setLoading(false);
-            setError(null);
+            data.current = response;
+            loading.current = false;
+            error.current = null;
+            forceUpdate((x) => x + 1);
             onCompleted?.(response);
           }
         })
-        .catch(e => {
+        .catch((e) => {
           if (isLatest) {
-            setData(null);
-            setLoading(false);
-            setError(e);
+            data.current = null;
+            loading.current = false;
+            error.current = e;
+            forceUpdate((x) => x + 1);
             onError?.(e);
           }
         });
@@ -52,7 +57,7 @@ export const useAsyncQuery = <Data, Variables>(
     };
   }, [query, variables, onCompleted, onError, skip]);
 
-  return {loading, error, data};
+  return { loading: loading.current, error: error.current, data: data.current };
 };
 
 export default useAsyncQuery;
