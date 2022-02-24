@@ -15,6 +15,33 @@ class Deferred<T> {
 }
 
 describe('useAsyncQuery', () => {
+  it('should start with loading set to true', async () => {
+    const deferred = new Deferred();
+
+    const mockAPI = jest.fn();
+    const render = jest.fn();
+    const query = (variables: string) => {
+      mockAPI(variables);
+        return deferred.promise;
+    };
+
+    const useWrapper = (query, options) => {
+      const result = useAsyncQuery(query, options)
+      render(result);
+      return result;
+    }
+
+    const {result} = renderHook(options => useWrapper(query, options), {
+      initialProps: {variables: 'run1'},
+    });
+    
+    expect(mockAPI).toHaveBeenCalledWith('run1');
+    expect(result.current.error).toBe(null);
+    expect(result.current.loading).toBe(true);
+    expect(result.current.data).toBe(null);
+    expect(render).toHaveBeenCalledTimes(1);
+  });
+
   it('should handle queries completing in series', async () => {
     const deferred1 = new Deferred();
     const deferred2 = new Deferred();
@@ -29,7 +56,7 @@ describe('useAsyncQuery', () => {
       }
     };
 
-    let {result, rerender} = renderHook(options => useAsyncQuery(query, options), {
+    const {result, rerender} = renderHook(options => useAsyncQuery(query, options), {
       initialProps: {variables: 'run1'},
     });
 
@@ -76,7 +103,7 @@ describe('useAsyncQuery', () => {
       }
     };
 
-    let {result, rerender} = renderHook(options => useAsyncQuery(query, options), {
+    const {result, rerender} = renderHook(options => useAsyncQuery(query, options), {
       initialProps: {variables: 'run1'},
     });
 
@@ -123,7 +150,7 @@ describe('useAsyncQuery', () => {
       }
     };
 
-    let {result, rerender} = renderHook(options => useAsyncQuery(query, options), {
+    const {result, rerender} = renderHook(options => useAsyncQuery(query, options), {
       initialProps: {variables: 'run1'},
     });
 
@@ -166,7 +193,7 @@ describe('useAsyncQuery', () => {
       return deferred1.promise;
     };
 
-    let {result} = renderHook(options => useAsyncQuery(query, options), {
+    const {result} = renderHook(options => useAsyncQuery(query, options), {
       initialProps: {variables: 'run1', onError: errorLog},
     });
 
@@ -198,7 +225,7 @@ describe('useAsyncQuery', () => {
       }
     };
 
-    let {result, rerender} = renderHook(options => useAsyncQuery(query, options), {
+    const {result, rerender} = renderHook(options => useAsyncQuery(query, options), {
       initialProps: {variables: 'run1', onError: errorLog},
     });
 
