@@ -14,11 +14,11 @@ export const useAsyncQuery = <Data, Variables>(
     onError?: (error: Error) => void;
   },
 ): {loading: boolean; error: Error | null; data: Data | null} => {
-  const [data, setData] = useState<Data | null>(null);
-  const [loading, setLoading] = useState<boolean>(false);
-  const [error, setError] = useState(null);
-
   const {variables, skip, onCompleted, onError} = options || {};
+
+  const [data, setData] = useState<Data | null>(null);
+  const [loading, setLoading] = useState<boolean>(!skip);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     let isLatest = true;
@@ -26,11 +26,10 @@ export const useAsyncQuery = <Data, Variables>(
       setLoading(false);
       setError(null);
     } else {
-      const promise = query(variables);
-      setLoading(true);
       setData(null);
+      setLoading(true);
       setError(null);
-      promise
+      query(variables)
         .then(response => {
           if (isLatest) {
             setData(response);
