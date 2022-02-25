@@ -1,24 +1,32 @@
 import { useState, useRef, useMemo } from "react";
 
+type Options<TData, TVariables> = {
+  variables: TVariables;
+  skip?: boolean;
+  onCompleted?: (data: TData) => void;
+  onError?: (error: any) => void;
+};
+
+type Result<TData> = {
+  loading: boolean;
+  error: any;
+  data: TData | null;
+}
+
+
 /**
  * Mirrors the functionality of
  * [Apollo's useQuery hook](https://www.apollographql.com/docs/react/data/queries/#usequery-api),
  * but with a "query" being any async function rather than GQL statement.
  */
-export const useAsyncQuery = <Data, Variables>(
-  query: (variables: Variables) => Promise<Data>,
-  options: {
-    variables: Variables; //TODO: call signature without Variables, optional Options
-    skip?: boolean;
-    onCompleted?: (data: Data) => void;
-    onError?: (error: Error) => void;
-  }
-): { loading: boolean; error: Error | null; data: Data | null } => {
+function useAsyncQuery<TData>(query: () => Promise<TData>, options?: Options<TData, never>):Result<TData>;
+function useAsyncQuery<TData, TVariables>(query: (variables: TVariables) => Promise<TData>, options: Options<TData, TVariables>):Result<TData>;
+function useAsyncQuery<TData, TVariables>(query: (variables?: TVariables) => Promise<TData>, options?: Options<TData, TVariables>):Result<TData> {
   const { variables, skip, onCompleted, onError } = options || {};
 
-  const data = useRef<Data>(null);
+  const data = useRef<TData | null>(null);
   const loading = useRef<boolean>(!skip);
-  const error = useRef(null);
+  const error = useRef<any>(null);
   const cancelLast = useRef<() => void>();
   const [, forceUpdate] = useState(0);
 
@@ -60,4 +68,6 @@ export const useAsyncQuery = <Data, Variables>(
   return { loading: loading.current, error: error.current, data: data.current };
 };
 
-export default useAsyncQuery;
+
+export { useAsyncQuery };
+export default (useAsyncQuery);

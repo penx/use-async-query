@@ -1,3 +1,8 @@
 {
-  "include": ["index.ts"]
+  "compilerOptions": {
+    "noEmit": true,
+    "isolatedModules": true,
+    "strict": true
+  },
+  "include": ["*.ts"]
 }

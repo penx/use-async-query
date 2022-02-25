@@ -25,13 +25,13 @@ describe("useAsyncQuery", () => {
       return deferred.promise;
     };
 
-    const useWrapper = (query, options) => {
+    const useWrapper = (options: {variables: string}) => {
       const result = useAsyncQuery(query, options);
       render(result);
       return result;
     };
 
-    const { result } = renderHook((options) => useWrapper(query, options), {
+    const { result } = renderHook((options) => useWrapper(options), {
       initialProps: { variables: "run1" },
     });
 
@@ -41,6 +41,32 @@ describe("useAsyncQuery", () => {
     expect(result.current.data).toBe(null);
     expect(render).toHaveBeenCalledTimes(1);
   });
+
+  it("should resolve a query with no parameters", async () => {
+    const deferred = new Deferred<string>();
+
+    const mockAPI = jest.fn();
+    const render = jest.fn();
+    const query = () => {
+      mockAPI();
+      return deferred.promise;
+    };
+
+    const useWrapper = () => {
+      const result = useAsyncQuery(query);
+      render(result);
+      return result;
+    };
+
+    const { result } = renderHook(() => useWrapper());
+
+    expect(mockAPI).toHaveBeenCalledTimes(1);
+    expect(result.current.error).toBe(null);
+    expect(result.current.loading).toBe(true);
+    expect(result.current.data).toBe(null);
+    expect(render).toHaveBeenCalledTimes(1);
+  });
+
 
   describe("when skip is set to true", () => {
     it("should start with loading set to false", async () => {
@@ -53,7 +79,7 @@ describe("useAsyncQuery", () => {
         return deferred.promise;
       };
 
-      const useWrapper = (query, options) => {
+      const useWrapper = (options: {variables: string, skip?: boolean}) => {
         const result = useAsyncQuery<string, string>(query, options);
         render(result);
         return result;
@@ -64,8 +90,8 @@ describe("useAsyncQuery", () => {
           variables: string;
           skip?: boolean;
         },
-        { loading: boolean; error: Error; data: string }
-      >((options) => useWrapper(query, options), {
+        { loading: boolean; error: unknown; data: string | null }
+      >((options) => useWrapper(options), {
         initialProps: { variables: "run1", skip: true },
       });
 
@@ -97,8 +123,8 @@ describe("useAsyncQuery", () => {
   });
 
   it("should handle queries completing in series", async () => {
-    const deferred1 = new Deferred();
-    const deferred2 = new Deferred();
+    const deferred1 = new Deferred<number>();
+    const deferred2 = new Deferred<number>();
 
     const mockAPI = jest.fn();
     const query = (variables: string) => {
@@ -147,8 +173,8 @@ describe("useAsyncQuery", () => {
   });
 
   it("should handle parallel queries completing in order", async () => {
-    const deferred1 = new Deferred();
-    const deferred2 = new Deferred();
+    const deferred1 = new Deferred<number>();
+    const deferred2 = new Deferred<number>();
 
     const mockAPI = jest.fn();
     const query = (variables: string) => {
@@ -197,8 +223,8 @@ describe("useAsyncQuery", () => {
   });
 
   it("should handle parallel queries completing in reverse order", async () => {
-    const deferred1 = new Deferred();
-    const deferred2 = new Deferred();
+    const deferred1 = new Deferred<number>();
+    const deferred2 = new Deferred<number>();
 
     const mockAPI = jest.fn();
     const query = (variables: string) => {
@@ -247,7 +273,7 @@ describe("useAsyncQuery", () => {
   });
 
   it("reports an error if query fails", async () => {
-    const deferred1 = new Deferred();
+    const deferred1 = new Deferred<never>();
 
     const mockAPI = jest.fn();
     const errorLog = jest.fn();
@@ -274,8 +300,8 @@ describe("useAsyncQuery", () => {
   });
 
   it("doesn't report an error if a new query has started after a query fails", async () => {
-    const deferred1 = new Deferred();
-    const deferred2 = new Deferred();
+    const deferred1 = new Deferred<number>();
+    const deferred2 = new Deferred<number>();
 
     const mockAPI = jest.fn();
     const errorLog = jest.fn();
