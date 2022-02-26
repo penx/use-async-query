@@ -25,7 +25,7 @@ describe("useAsyncQuery", () => {
       return deferred.promise;
     };
 
-    const useWrapper = (options: {variables: string}) => {
+    const useWrapper = (options: { variables: string }) => {
       const result = useAsyncQuery(query, options);
       render(result);
       return result;
@@ -67,7 +67,6 @@ describe("useAsyncQuery", () => {
     expect(render).toHaveBeenCalledTimes(1);
   });
 
-
   describe("when skip is set to true", () => {
     it("should start with loading set to false", async () => {
       const deferred = new Deferred<string>();
@@ -79,7 +78,7 @@ describe("useAsyncQuery", () => {
         return deferred.promise;
       };
 
-      const useWrapper = (options: {variables: string, skip?: boolean}) => {
+      const useWrapper = (options: { variables: string; skip?: boolean }) => {
         const result = useAsyncQuery<string, string>(query, options);
         render(result);
         return result;
@@ -270,6 +269,26 @@ describe("useAsyncQuery", () => {
     expect(result.current.error).toBe(null);
     expect(result.current.loading).toBe(false);
     expect(result.current.data).toBe(2);
+  });
+
+  it("calls onSuccess when a query succeeds", async () => {
+    const deferred = new Deferred<string>();
+    const onCompleted = jest.fn();
+
+    const query = () => deferred.promise;
+    const { result } = renderHook(() => useAsyncQuery(query, { onCompleted }));
+
+    expect(result.current.error).toBe(null);
+    expect(result.current.loading).toBe(true);
+    expect(result.current.data).toBe(null);
+
+    await act(async () => {
+      deferred.resolve("resolved");
+    });
+
+    expect(result.current.data).toBe("resolved");
+    expect(onCompleted).toHaveBeenCalledTimes(1);
+    expect(onCompleted).toHaveBeenCalledWith("resolved");
   });
 
   it("reports an error if query fails", async () => {
