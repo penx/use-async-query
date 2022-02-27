@@ -12,7 +12,7 @@ type Options<TData> = {
   onError?: (error: any) => void;
 };
 
-type Result<TData> = {
+export type Result<TData> = {
   loading: boolean;
   error: any;
   data: TData | null;

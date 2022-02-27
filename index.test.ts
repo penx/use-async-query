@@ -1,5 +1,9 @@
-import { renderHook, act } from "@testing-library/react-hooks";
-import { useAsyncQuery } from ".";
+import {
+  renderHook,
+  act,
+  RenderHookResult,
+} from "@testing-library/react-hooks";
+import { Result, useAsyncQuery } from ".";
 
 class Deferred<T> {
   promise: Promise<T>;
@@ -15,359 +19,253 @@ class Deferred<T> {
 }
 
 describe("useAsyncQuery", () => {
-  it("should start with loading set to true", async () => {
-    const deferred = new Deferred<string>();
+  describe("when an asynronous query", () => {
+    let deferred: Deferred<string>;
+    const mockQuery = jest.fn();
 
-    const mockAPI = jest.fn();
-    const render = jest.fn();
-    const query = (variables: string) => {
-      mockAPI(variables);
-      return deferred.promise;
-    };
-
-    const useWrapper = (options: { variables: string }) => {
-      const result = useAsyncQuery(query, options);
-      render(result);
-      return result;
-    };
-
-    const { result } = renderHook((options) => useWrapper(options), {
-      initialProps: { variables: "run1" },
+    beforeEach(() => {
+      deferred = new Deferred<string>();
+      mockQuery.mockReturnValue(deferred.promise);
+    });
+    afterEach(() => {
+      mockQuery.mockReset();
     });
 
-    expect(mockAPI).toHaveBeenCalledWith("run1");
-    expect(result.current.error).toBe(null);
-    expect(result.current.loading).toBe(true);
-    expect(result.current.data).toBe(null);
-    expect(render).toHaveBeenCalledTimes(1);
-  });
-
-  it("should resolve a query with no parameters", async () => {
-    const deferred = new Deferred<string>();
-
-    const mockAPI = jest.fn();
-    const render = jest.fn();
-    const query = () => {
-      mockAPI();
-      return deferred.promise;
-    };
-
-    const useWrapper = () => {
-      const result = useAsyncQuery(query);
-      render(result);
-      return result;
-    };
-
-    const { result } = renderHook(() => useWrapper());
-
-    expect(mockAPI).toHaveBeenCalledTimes(1);
-    expect(result.current.error).toBe(null);
-    expect(result.current.loading).toBe(true);
-    expect(result.current.data).toBe(null);
-    expect(render).toHaveBeenCalledTimes(1);
-  });
-
-  describe("when skip is set to true", () => {
-    it("should start with loading set to false", async () => {
-      const deferred = new Deferred<string>();
-
-      const mockAPI = jest.fn();
-      const render = jest.fn();
-      const query = (variables: string) => {
-        mockAPI(variables);
-        return deferred.promise;
-      };
-
-      const useWrapper = (options: { variables: string; skip?: boolean }) => {
-        const result = useAsyncQuery<string, string>(query, options);
-        render(result);
-        return result;
-      };
-
-      const { result, rerender } = renderHook<
-        {
-          variables: string;
-          skip?: boolean;
-        },
-        { loading: boolean; error: unknown; data: string | null }
-      >((options) => useWrapper(options), {
-        initialProps: { variables: "run1", skip: true },
+    describe("is called with variables", () => {
+      let renderHookResult: RenderHookResult<any, Result<string>>;
+      const onCompleted = jest.fn();
+      const onError = jest.fn();
+      beforeEach(() => {
+        renderHookResult = renderHook(
+          (options) => useAsyncQuery(mockQuery, options),
+          {
+            initialProps: { variables: "run1", onCompleted, onError },
+          }
+        );
+      });
+      afterEach(() => {
+        onCompleted.mockReset();
+        onError.mockReset();
+      });
+      it("should start with loading set to true", async () => {
+        expect(mockQuery).toHaveBeenCalledWith("run1");
+        expect(renderHookResult.result.current.error).toBe(null);
+        expect(renderHookResult.result.current.loading).toBe(true);
+        expect(renderHookResult.result.current.data).toBe(null);
+        expect(renderHookResult.result.all.length).toBe(1);
       });
 
-      expect(mockAPI).toHaveBeenCalledTimes(0);
-      expect(result.current.error).toBe(null);
-      expect(result.current.loading).toBe(false);
-      expect(result.current.data).toBe(null);
-      expect(render).toHaveBeenCalledTimes(1);
+      describe("the query resolves", () => {
+        beforeEach(async () => {
+          await act(async () => {
+            deferred.resolve("resolved");
+          });
+        });
+        it("should return with loading set to false", () => {
+          expect(mockQuery).toHaveBeenCalledTimes(1);
+          expect(renderHookResult.result.current.error).toBe(null);
+          expect(renderHookResult.result.current.loading).toBe(false);
+          expect(renderHookResult.result.current.data).toBe("resolved");
+          expect(renderHookResult.result.all.length).toBe(2);
+        });
 
-      rerender({ variables: "run2" });
+        it("should call onCompleted with data returned from query", async () => {
+          expect(onCompleted).toHaveBeenCalledTimes(1);
+          expect(onCompleted).toHaveBeenCalledWith("resolved");
+        });
 
-      expect(mockAPI).toHaveBeenCalledWith("run2");
-      expect(mockAPI).toHaveBeenCalledTimes(1);
-      expect(result.current.error).toBe(null);
-      expect(result.current.loading).toBe(true);
-      expect(result.current.data).toBe(null);
-      expect(render).toHaveBeenCalledTimes(2);
+        describe("is called with different variables", () => {
+          let deferred2: Deferred<string>;
+          beforeEach(() => {
+            deferred2 = new Deferred<string>();
+            mockQuery.mockReturnValue(deferred2.promise);
+            renderHookResult.rerender({ variables: "run2" });
+          });
 
-      await act(async () => {
-        deferred.resolve("resolved");
+          it("should return with loading=true and data=null", () => {
+            expect(mockQuery).toHaveBeenCalledTimes(2);
+            expect(mockQuery).toHaveBeenCalledWith("run2");
+            expect(renderHookResult.result.current.error).toBe(null);
+            expect(renderHookResult.result.current.loading).toBe(true);
+            expect(renderHookResult.result.current.data).toBe(null);
+          });
+
+          describe("the second query resolves", () => {
+            beforeEach(async () => {
+              await act(async () => {
+                deferred2.resolve("2nd resolved");
+              });
+            });
+
+            it("should return with data from the second query", () => {
+              expect(renderHookResult.result.current.error).toBe(null);
+              expect(renderHookResult.result.current.loading).toBe(false);
+              expect(renderHookResult.result.current.data).toBe("2nd resolved");
+            });
+          });
+        });
       });
 
-      expect(mockAPI).toHaveBeenCalledTimes(1);
-      expect(result.current.error).toBe(null);
-      expect(result.current.loading).toBe(false);
-      expect(result.current.data).toBe("resolved");
-      expect(render).toHaveBeenCalledTimes(3);
-    });
-  });
+      describe("the query is rejected", () => {
+        beforeEach(async () => {
+          await act(async () => {
+            deferred.reject("rejected");
+          });
+        });
 
-  it("should handle queries completing in series", async () => {
-    const deferred1 = new Deferred<number>();
-    const deferred2 = new Deferred<number>();
+        it("reports an error and calls onError", async () => {
+          expect(renderHookResult.result.current.error).toBe("rejected");
+          expect(onError).toHaveBeenCalledTimes(1);
+          expect(onError).toHaveBeenCalledWith("rejected");
+        });
+      });
 
-    const mockAPI = jest.fn();
-    const query = (variables: string) => {
-      mockAPI(variables);
-      if (variables === "run1") {
-        return deferred1.promise;
-      } else {
-        return deferred2.promise;
-      }
-    };
+      describe("is called with different variables", () => {
+        let deferred2: Deferred<string>;
+        beforeEach(() => {
+          deferred2 = new Deferred<string>();
+          mockQuery.mockReturnValue(deferred2.promise);
+          renderHookResult.rerender({ variables: "run2" });
+        });
 
-    const { result, rerender } = renderHook(
-      (options) => useAsyncQuery(query, options),
-      {
-        initialProps: { variables: "run1" },
-      }
-    );
+        it("should return with loading=true and data=null", () => {
+          expect(mockQuery).toHaveBeenCalledTimes(2);
+          expect(mockQuery).toHaveBeenCalledWith("run2");
+          expect(renderHookResult.result.current.error).toBe(null);
+          expect(renderHookResult.result.current.loading).toBe(true);
+          expect(renderHookResult.result.current.data).toBe(null);
+        });
 
-    expect(mockAPI).toHaveBeenCalledWith("run1");
-    expect(result.current.error).toBe(null);
-    expect(result.current.loading).toBe(true);
-    expect(result.current.data).toBe(null);
+        describe("the second query resolves", () => {
+          beforeEach(async () => {
+            await act(async () => {
+              deferred2.resolve("2nd resolved");
+            });
+          });
 
-    await act(async () => {
-      deferred1.resolve(1);
-    });
+          it("should return with data from the second query", () => {
+            expect(renderHookResult.result.current.error).toBe(null);
+            expect(renderHookResult.result.current.loading).toBe(false);
+            expect(renderHookResult.result.current.data).toBe("2nd resolved");
+          });
 
-    expect(result.current.error).toBe(null);
-    expect(result.current.loading).toBe(false);
-    expect(result.current.data).toBe(1);
+          describe("the first query resolves", () => {
+            beforeEach(async () => {
+              await act(async () => {
+                deferred.resolve("1st resolved");
+              });
+            });
 
-    rerender({ variables: "run2" });
-    expect(mockAPI).toHaveBeenCalledWith("run2");
+            it("should return with data from the second query", () => {
+              expect(renderHookResult.result.current.error).toBe(null);
+              expect(renderHookResult.result.current.loading).toBe(false);
+              expect(renderHookResult.result.current.data).toBe("2nd resolved");
+            });
+          });
+        });
 
-    expect(result.current.error).toBe(null);
-    expect(result.current.loading).toBe(true);
-    expect(result.current.data).toBe(null);
+        describe("the first query resolves", () => {
+          beforeEach(async () => {
+            await act(async () => {
+              deferred.resolve("resolved");
+            });
+          });
 
-    await act(async () => {
-      deferred2.resolve(2);
-    });
+          it("should return loading=true and data=null", () => {
+            expect(renderHookResult.result.current.error).toBe(null);
+            expect(renderHookResult.result.current.loading).toBe(true);
+            expect(renderHookResult.result.current.data).toBe(null);
+          });
 
-    expect(result.current.error).toBe(null);
-    expect(result.current.loading).toBe(false);
-    expect(result.current.data).toBe(2);
-  });
+          describe("the second query resolves", () => {
+            beforeEach(async () => {
+              await act(async () => {
+                deferred2.resolve("2nd resolved");
+              });
+            });
 
-  it("should handle parallel queries completing in order", async () => {
-    const deferred1 = new Deferred<number>();
-    const deferred2 = new Deferred<number>();
-
-    const mockAPI = jest.fn();
-    const query = (variables: string) => {
-      mockAPI(variables);
-      if (variables === "run1") {
-        return deferred1.promise;
-      } else {
-        return deferred2.promise;
-      }
-    };
-
-    const { result, rerender } = renderHook(
-      (options) => useAsyncQuery(query, options),
-      {
-        initialProps: { variables: "run1" },
-      }
-    );
-
-    expect(mockAPI).toHaveBeenCalledWith("run1");
-    expect(result.current.error).toBe(null);
-    expect(result.current.loading).toBe(true);
-    expect(result.current.data).toBe(null);
-
-    rerender({ variables: "run2" });
-
-    expect(mockAPI).toHaveBeenCalledWith("run2");
-    expect(result.current.error).toBe(null);
-    expect(result.current.loading).toBe(true);
-    expect(result.current.data).toBe(null);
-
-    await act(async () => {
-      deferred1.resolve(1);
-    });
-
-    expect(result.current.error).toBe(null);
-    expect(result.current.loading).toBe(true);
-    expect(result.current.data).toBe(null);
-
-    await act(async () => {
-      deferred2.resolve(2);
-    });
-
-    expect(result.current.error).toBe(null);
-    expect(result.current.loading).toBe(false);
-    expect(result.current.data).toBe(2);
-  });
-
-  it("should handle parallel queries completing in reverse order", async () => {
-    const deferred1 = new Deferred<number>();
-    const deferred2 = new Deferred<number>();
-
-    const mockAPI = jest.fn();
-    const query = (variables: string) => {
-      mockAPI(variables);
-      if (variables === "run1") {
-        return deferred1.promise;
-      } else {
-        return deferred2.promise;
-      }
-    };
-
-    const { result, rerender } = renderHook(
-      (options) => useAsyncQuery(query, options),
-      {
-        initialProps: { variables: "run1" },
-      }
-    );
-
-    expect(mockAPI).toHaveBeenCalledWith("run1");
-    expect(result.current.error).toBe(null);
-    expect(result.current.loading).toBe(true);
-    expect(result.current.data).toBe(null);
-
-    rerender({ variables: "run2" });
-
-    expect(mockAPI).toHaveBeenCalledWith("run2");
-    expect(result.current.error).toBe(null);
-    expect(result.current.loading).toBe(true);
-    expect(result.current.data).toBe(null);
-
-    await act(async () => {
-      deferred2.resolve(2);
+            it("should return with data from the second query", () => {
+              expect(renderHookResult.result.current.error).toBe(null);
+              expect(renderHookResult.result.current.loading).toBe(false);
+              expect(renderHookResult.result.current.data).toBe("2nd resolved");
+            });
+          });
+        });
+        describe("the first query rejects", () => {
+          beforeEach(async () => {
+            await act(async () => {
+              deferred.reject("rejected");
+            });
+          });
+          it("should return loading=true and data=null", () => {
+            expect(renderHookResult.result.current.loading).toBe(true);
+            expect(renderHookResult.result.current.data).toBe(null);
+          });
+          it("should not return an error or call onError", () => {
+            expect(renderHookResult.result.current.error).toBe(null);
+            expect(onError).toHaveBeenCalledTimes(0);
+          });
+        });
+      });
     });
 
-    expect(result.current.error).toBe(null);
-    expect(result.current.loading).toBe(false);
-    expect(result.current.data).toBe(2);
-
-    await act(async () => {
-      deferred1.resolve(1);
+    describe("is called without variables", () => {
+      let renderHookResult: RenderHookResult<never, Result<string>>;
+      beforeEach(() => {
+        renderHookResult = renderHook(() => useAsyncQuery(mockQuery));
+      });
+      it("should start with loading set to true", async () => {
+        expect(mockQuery).toHaveBeenCalledWith();
+        expect(mockQuery).toHaveBeenCalledTimes(1);
+        expect(renderHookResult.result.current.error).toBe(null);
+        expect(renderHookResult.result.current.loading).toBe(true);
+        expect(renderHookResult.result.current.data).toBe(null);
+        expect(renderHookResult.result.all.length).toBe(1);
+      });
     });
 
-    expect(result.current.error).toBe(null);
-    expect(result.current.loading).toBe(false);
-    expect(result.current.data).toBe(2);
-  });
-
-  it("calls onSuccess when a query succeeds", async () => {
-    const deferred = new Deferred<string>();
-    const onCompleted = jest.fn();
-
-    const query = () => deferred.promise;
-    const { result } = renderHook(() => useAsyncQuery(query, { onCompleted }));
-
-    expect(result.current.error).toBe(null);
-    expect(result.current.loading).toBe(true);
-    expect(result.current.data).toBe(null);
-
-    await act(async () => {
-      deferred.resolve("resolved");
+    describe("is called with skip set to true", () => {
+      let renderHookResult: RenderHookResult<any, Result<string>>;
+      beforeEach(() => {
+        renderHookResult = renderHook(
+          (options) => useAsyncQuery(mockQuery, options),
+          { initialProps: { skip: true } }
+        );
+      });
+      it("should start with loading set to false", async () => {
+        expect(mockQuery).toHaveBeenCalledTimes(0);
+        expect(renderHookResult.result.current.error).toBe(null);
+        expect(renderHookResult.result.current.loading).toBe(false);
+        expect(renderHookResult.result.current.data).toBe(null);
+        expect(renderHookResult.result.all.length).toBe(1);
+      });
+      describe("is called again with skip not set", () => {
+        beforeEach(() => {
+          renderHookResult.rerender({ variables: "run2" });
+        });
+        it("should set loading to true", () => {
+          expect(mockQuery).toHaveBeenCalledWith("run2");
+          expect(mockQuery).toHaveBeenCalledTimes(1);
+          expect(renderHookResult.result.current.error).toBe(null);
+          expect(renderHookResult.result.current.loading).toBe(true);
+          expect(renderHookResult.result.current.data).toBe(null);
+          expect(renderHookResult.result.all.length).toBe(2);
+        });
+        describe("the query resolves", () => {
+          beforeEach(async () => {
+            await act(async () => {
+              deferred.resolve("resolved");
+            });
+          });
+          it("should return with loading set to false", () => {
+            expect(mockQuery).toHaveBeenCalledTimes(1);
+            expect(renderHookResult.result.current.error).toBe(null);
+            expect(renderHookResult.result.current.loading).toBe(false);
+            expect(renderHookResult.result.current.data).toBe("resolved");
+            expect(renderHookResult.result.all.length).toBe(3);
+          });
+        });
+      });
     });
-
-    expect(result.current.data).toBe("resolved");
-    expect(onCompleted).toHaveBeenCalledTimes(1);
-    expect(onCompleted).toHaveBeenCalledWith("resolved");
-  });
-
-  it("reports an error if query fails", async () => {
-    const deferred1 = new Deferred<never>();
-
-    const mockAPI = jest.fn();
-    const errorLog = jest.fn();
-    const query = (variables: string) => {
-      mockAPI(variables);
-      return deferred1.promise;
-    };
-
-    const { result } = renderHook((options) => useAsyncQuery(query, options), {
-      initialProps: { variables: "run1", onError: errorLog },
-    });
-
-    expect(mockAPI).toHaveBeenCalledWith("run1");
-    expect(result.current.error).toBe(null);
-    expect(result.current.loading).toBe(true);
-    expect(result.current.data).toBe(null);
-
-    await act(async () => {
-      deferred1.reject("some error");
-    });
-
-    expect(result.current.error).toBe("some error");
-    expect(errorLog).toHaveBeenCalledTimes(1);
-  });
-
-  it("doesn't report an error if a new query has started after a query fails", async () => {
-    const deferred1 = new Deferred<number>();
-    const deferred2 = new Deferred<number>();
-
-    const mockAPI = jest.fn();
-    const errorLog = jest.fn();
-    const query = (variables: string) => {
-      mockAPI(variables);
-      if (variables === "run1") {
-        return deferred1.promise;
-      } else {
-        return deferred2.promise;
-      }
-    };
-
-    const { result, rerender } = renderHook(
-      (options) => useAsyncQuery(query, options),
-      {
-        initialProps: { variables: "run1", onError: errorLog },
-      }
-    );
-
-    expect(mockAPI).toHaveBeenCalledWith("run1");
-    expect(result.current.error).toBe(null);
-    expect(result.current.loading).toBe(true);
-    expect(result.current.data).toBe(null);
-
-    rerender({ variables: "run2", onError: errorLog });
-
-    expect(mockAPI).toHaveBeenCalledWith("run2");
-    expect(result.current.error).toBe(null);
-    expect(result.current.loading).toBe(true);
-    expect(result.current.data).toBe(null);
-
-    await act(async () => {
-      deferred1.reject("an error");
-    });
-
-    expect(result.current.error).toBe(null);
-    expect(result.current.loading).toBe(true);
-    expect(result.current.data).toBe(null);
-
-    await act(async () => {
-      deferred2.resolve(2);
-    });
-
-    expect(result.current.error).toBe(null);
-    expect(result.current.loading).toBe(false);
-    expect(result.current.data).toBe(2);
-
-    expect(errorLog).toHaveBeenCalledTimes(0);
   });
 });
