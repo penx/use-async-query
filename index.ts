@@ -16,6 +16,7 @@ export type Result<TData> = {
   loading: boolean;
   error: any;
   data: TData | null;
+  previousData: TData | null;
 };
 
 /**
@@ -38,6 +39,7 @@ function useAsyncQuery<TData, TVariables>(
   const { skip, onCompleted, onError } = options || {};
 
   const data = useRef<TData | null>(null);
+  const previousData = useRef<TData | null>(null);
   const loading = useRef<boolean>(!skip);
   const error = useRef<any>(null);
   const cancelLast = useRef<() => void>();
@@ -51,6 +53,7 @@ function useAsyncQuery<TData, TVariables>(
       loading.current = false;
       error.current = null;
     } else {
+      previousData.current = data.current;
       data.current = null;
       loading.current = true;
       error.current = null;
@@ -66,7 +69,6 @@ function useAsyncQuery<TData, TVariables>(
         })
         .catch((e) => {
           if (isLatest) {
-            data.current = null;
             loading.current = false;
             error.current = e;
             forceUpdate((x) => x + 1);
@@ -79,7 +81,12 @@ function useAsyncQuery<TData, TVariables>(
     };
   }, [query, variables, onCompleted, onError, skip]);
 
-  return { loading: loading.current, error: error.current, data: data.current };
+  return {
+    loading: loading.current,
+    error: error.current,
+    data: data.current,
+    previousData: previousData.current,
+  };
 }
 
 export { useAsyncQuery };

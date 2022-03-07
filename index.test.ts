@@ -73,6 +73,10 @@ describe("useAsyncQuery", () => {
           expect(onCompleted).toHaveBeenCalledTimes(1);
           expect(onCompleted).toHaveBeenCalledWith("resolved");
         });
+        it("should not return any previousData", () => {
+          expect(renderHookResult.result.current.previousData).toBe(null);
+        });
+
 
         describe("is called with different variables", () => {
           let deferred2: Deferred<string>;
@@ -90,6 +94,10 @@ describe("useAsyncQuery", () => {
             expect(renderHookResult.result.current.data).toBe(null);
           });
 
+          it("should return previousData", () => {
+            expect(renderHookResult.result.current.previousData).toBe("resolved");
+          });
+
           describe("the second query resolves", () => {
             beforeEach(async () => {
               await act(async () => {
@@ -101,6 +109,9 @@ describe("useAsyncQuery", () => {
               expect(renderHookResult.result.current.error).toBe(null);
               expect(renderHookResult.result.current.loading).toBe(false);
               expect(renderHookResult.result.current.data).toBe("2nd resolved");
+            });
+            it("should return previousData from the first query", () => {
+              expect(renderHookResult.result.current.previousData).toBe("resolved");
             });
           });
         });
