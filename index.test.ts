@@ -37,7 +37,7 @@ describe("useAsyncQuery", () => {
       const onError = jest.fn();
       beforeEach(() => {
         renderHookResult = renderHook(
-          (options) => useAsyncQuery(mockQuery, options),
+          (options) => useAsyncQuery<string, string>(mockQuery, options),
           {
             initialProps: { variables: "run1", onCompleted, onError },
           }
@@ -223,7 +223,7 @@ describe("useAsyncQuery", () => {
     describe("is called without variables", () => {
       let renderHookResult: RenderHookResult<never, Result<string>>;
       beforeEach(() => {
-        renderHookResult = renderHook(() => useAsyncQuery(mockQuery));
+        renderHookResult = renderHook(() => useAsyncQuery<string, never>(mockQuery));
       });
       it("should start with loading set to true", async () => {
         expect(mockQuery).toHaveBeenCalledWith();
