@@ -1,8 +1,14 @@
 {
   "compilerOptions": {
+    "target": "esnext",
+    "module": "esnext",
+    "allowJs": false,
     "noEmit": true,
     "isolatedModules": true,
-    "strict": true
+    "esModuleInterop": true,
+    "strict": true,
+    "declaration": true,
+    "moduleResolution": "node"
   },
   "include": ["*.ts"]
 }
