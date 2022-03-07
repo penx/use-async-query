@@ -3,7 +3,7 @@ import {
   act,
   RenderHookResult,
 } from "@testing-library/react-hooks";
-import { Result, useAsyncQuery } from ".";
+import { Result, useAsyncQuery } from "./index";
 
 class Deferred<T> {
   promise: Promise<T>;
