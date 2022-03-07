@@ -1,16 +1,13 @@
 import { useState, useRef, useMemo } from "react";
 
-interface OptionsWithVariables<TData, TVariables> extends Options<TData> {
-  variables: TVariables;
+type Variables = Record<string, any>;
+
+interface Options<TData, TVariables> {
+  variables?: TVariables;
   skip?: boolean;
   onCompleted?: (data: TData) => void;
   onError?: (error: any) => void;
 }
-type Options<TData> = {
-  skip?: boolean;
-  onCompleted?: (data: TData) => void;
-  onError?: (error: any) => void;
-};
 
 export type Result<TData> = {
   loading: boolean;
@@ -24,17 +21,9 @@ export type Result<TData> = {
  * [Apollo's useQuery hook](https://www.apollographql.com/docs/react/data/queries/#usequery-api),
  * but with a "query" being any async function rather than GQL statement.
  */
-function useAsyncQuery<TData>(
-  query: () => Promise<TData>,
-  options?: Options<TData>
-): Result<TData>;
-function useAsyncQuery<TData, TVariables>(
-  query: (variables: TVariables) => Promise<TData>,
-  options: OptionsWithVariables<TData, TVariables>
-): Result<TData>;
-function useAsyncQuery<TData, TVariables>(
+function useAsyncQuery<TData = any, TVariables = Variables>(
   query: (variables?: TVariables) => Promise<TData>,
-  options?: OptionsWithVariables<TData, TVariables> | Options<TData>
+  options?: Options<TData, TVariables>
 ): Result<TData> {
   const { skip, onCompleted, onError } = options || {};
 
