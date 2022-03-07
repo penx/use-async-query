@@ -14,3 +14,15 @@ expectType<{
     }
   ).data
 );
+
+expectType<{
+    foo: string;
+  } | null>(
+    useAsyncQuery<{ foo: string }>(
+      () =>
+        new Promise<{ foo: string }>((resolve) =>
+          setTimeout(() => resolve({ foo: "test" }), 0)
+        ),
+    ).data
+  );
+  
