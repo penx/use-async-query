@@ -45,16 +45,19 @@ export function useLazyQuery<TData = any, TVariables = Record<string, any>>(
     };
   }
 
-  const execute = useCallback((executeOptions?: { variables: TVariables }) => {
-    setExecution({ called: true, options: executeOptions });
-    return result.refetch(executeOptions?.variables).then((newResult) => ({
-      ...result,
-      data: newResult.data,
-      error: newResult.error,
-      called: true,
-      loading: false,
-    }));
-  }, []);
+  const execute = useCallback(
+    (executeOptions?: { variables: TVariables }) => {
+      setExecution({ called: true, options: executeOptions });
+      return result.refetch(executeOptions?.variables).then((newResult) => ({
+        ...result,
+        data: newResult.data,
+        error: newResult.error,
+        called: true,
+        loading: false,
+      }));
+    },
+    [result]
+  );
 
   return [execute, result];
 }

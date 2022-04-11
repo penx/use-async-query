@@ -79,7 +79,7 @@ function useQuery<TData = any, TVariables = Variables>(
           throw e;
         });
     },
-    [query, variables, onCompleted, onError, skip]
+    [query, variables, onCompleted, onError]
   );
 
   useMemo(async () => {
