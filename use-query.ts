@@ -2,7 +2,7 @@ import { useState, useRef, useMemo, useCallback } from "react";
 
 type Variables = Record<string, any>;
 
-interface Options<TData, TVariables> {
+export interface Options<TData, TVariables> {
   variables?: TVariables;
   skip?: boolean;
   onCompleted?: (data: TData) => void;
@@ -14,7 +14,9 @@ export type Result<TData, TVariables = Variables> = {
   error: any;
   data: TData | null;
   previousData: TData | null;
-  refetch: (variables?: TVariables | undefined) => void;
+  refetch: (
+    variables?: TVariables | undefined
+  ) => Promise<Result<TData, TVariables>>;
 };
 
 /**
@@ -22,7 +24,7 @@ export type Result<TData, TVariables = Variables> = {
  * [Apollo's useQuery hook](https://www.apollographql.com/docs/react/data/queries/#usequery-api),
  * but with a "query" being any async function rather than GQL statement.
  */
-function useAsyncQuery<TData = any, TVariables = Variables>(
+function useQuery<TData = any, TVariables = Variables>(
   query: (variables?: TVariables) => Promise<TData>,
   options?: Options<TData, TVariables>
 ): Result<TData, TVariables> {
@@ -37,8 +39,10 @@ function useAsyncQuery<TData = any, TVariables = Variables>(
   const variables =
     options && "variables" in options ? options.variables : undefined;
 
-  const fetch = useCallback(
-    (refetchVariables: TVariables | undefined = variables) => {
+  const fetch: (
+    refetchVariables?: TVariables | undefined
+  ) => Promise<Result<TData, TVariables>> = useCallback(
+    async (refetchVariables: TVariables | undefined = variables) => {
       cancelLast.current?.();
       let isLatest = true;
       previousData.current = data.current;
@@ -48,7 +52,7 @@ function useAsyncQuery<TData = any, TVariables = Variables>(
       cancelLast.current = () => {
         isLatest = false;
       };
-      query(...(refetchVariables ? [refetchVariables] : []))
+      return query(...(refetchVariables ? [refetchVariables] : []))
         .then((response) => {
           if (isLatest) {
             data.current = response;
@@ -57,7 +61,13 @@ function useAsyncQuery<TData = any, TVariables = Variables>(
             forceUpdate((x) => x + 1);
             onCompleted?.(response);
           }
-          return response;
+          return {
+            loading: loading.current,
+            error: error.current,
+            data: data.current,
+            previousData: previousData.current,
+            refetch: fetch,
+          };
         })
         .catch((e) => {
           if (isLatest) {
@@ -66,12 +76,19 @@ function useAsyncQuery<TData = any, TVariables = Variables>(
             forceUpdate((x) => x + 1);
             onError?.(e);
           }
+          throw e;
         });
     },
     [query, variables, onCompleted, onError, skip]
   );
 
-  useMemo(!skip ? fetch : () => null, [fetch, skip]);
+  useMemo(async () => {
+    if (!skip) {
+      try {
+        await fetch();
+      } catch (e) {}
+    }
+  }, [fetch, skip]);
 
   return {
     loading: loading.current,
@@ -82,5 +99,5 @@ function useAsyncQuery<TData = any, TVariables = Variables>(
   };
 }
 
-export { useAsyncQuery };
-export default useAsyncQuery;
+export { useQuery };
+export default useQuery;
