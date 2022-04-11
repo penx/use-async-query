@@ -2,21 +2,21 @@ import { useState, useRef, useMemo, useCallback } from "react";
 
 type Variables = Record<string, any>;
 
-export interface Options<TData, TVariables> {
+export interface QueryOptions<TData, TVariables> {
   variables?: TVariables;
   skip?: boolean;
   onCompleted?: (data: TData) => void;
   onError?: (error: any) => void;
 }
 
-export type Result<TData, TVariables = Variables> = {
+export type QueryResult<TData, TVariables = Variables> = {
   loading: boolean;
   error: any;
   data: TData | null;
   previousData: TData | null;
   refetch: (
     variables?: TVariables | undefined
-  ) => Promise<Result<TData, TVariables>>;
+  ) => Promise<QueryResult<TData, TVariables>>;
 };
 
 /**
@@ -26,8 +26,8 @@ export type Result<TData, TVariables = Variables> = {
  */
 function useQuery<TData = any, TVariables = Variables>(
   query: (variables?: TVariables) => Promise<TData>,
-  options?: Options<TData, TVariables>
-): Result<TData, TVariables> {
+  options?: QueryOptions<TData, TVariables>
+): QueryResult<TData, TVariables> {
   const { skip, onCompleted, onError } = options || {};
 
   const data = useRef<TData | null>(null);
@@ -41,7 +41,7 @@ function useQuery<TData = any, TVariables = Variables>(
 
   const fetch: (
     refetchVariables?: TVariables | undefined
-  ) => Promise<Result<TData, TVariables>> = useCallback(
+  ) => Promise<QueryResult<TData, TVariables>> = useCallback(
     async (refetchVariables: TVariables | undefined = variables) => {
       cancelLast.current?.();
       let isLatest = true;
