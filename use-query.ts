@@ -100,4 +100,3 @@ function useQuery<TData = any, TVariables = Variables>(
 }
 
 export { useQuery };
-export default useQuery;
