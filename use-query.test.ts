@@ -3,7 +3,7 @@ import {
   act,
   RenderHookResult,
 } from "@testing-library/react-hooks";
-import { Result, useAsyncQuery } from "./index";
+import { Result, useQuery } from "./use-query";
 
 class Deferred<T> {
   promise: Promise<T>;
@@ -18,7 +18,7 @@ class Deferred<T> {
   }
 }
 
-describe("useAsyncQuery", () => {
+describe("useQuery", () => {
   describe("when an asyncronous query", () => {
     let deferred: Deferred<string>;
     const mockQuery = jest.fn();
@@ -37,7 +37,7 @@ describe("useAsyncQuery", () => {
       const onError = jest.fn();
       beforeEach(() => {
         renderHookResult = renderHook(
-          (options) => useAsyncQuery<string, string>(mockQuery, options),
+          (options) => useQuery<string, string>(mockQuery, options),
           {
             initialProps: { variables: "run1", onCompleted, onError },
           }
@@ -76,7 +76,6 @@ describe("useAsyncQuery", () => {
         it("should not return any previousData", () => {
           expect(renderHookResult.result.current.previousData).toBe(null);
         });
-
 
         describe("is called with different variables", () => {
           let deferred2: Deferred<string>;
@@ -227,9 +226,7 @@ describe("useAsyncQuery", () => {
     describe("is called without variables", () => {
       let renderHookResult: RenderHookResult<never, Result<string, never>>;
       beforeEach(() => {
-        renderHookResult = renderHook(() =>
-          useAsyncQuery<string, never>(mockQuery)
-        );
+        renderHookResult = renderHook(() => useQuery<string, never>(mockQuery));
       });
       it("should start with loading set to true", async () => {
         expect(mockQuery).toHaveBeenCalledWith();
@@ -245,7 +242,7 @@ describe("useAsyncQuery", () => {
       let renderHookResult: RenderHookResult<any, Result<string, string>>;
       beforeEach(() => {
         renderHookResult = renderHook(
-          (options) => useAsyncQuery(mockQuery, options),
+          (options) => useQuery(mockQuery, options),
           { initialProps: { skip: true } }
         );
       });

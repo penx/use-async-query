@@ -1,10 +1,10 @@
 import { expectType } from "tsd";
-import { useAsyncQuery } from "./index";
+import { useQuery } from "./use-query";
 
 expectType<{
   foo: string;
 } | null>(
-  useAsyncQuery<{ foo: string }, { bar: string }>(
+  useQuery<{ foo: string }, { bar: string }>(
     () =>
       new Promise<{ foo: string }>((resolve) =>
         setTimeout(() => resolve({ foo: "test" }), 0)
@@ -16,13 +16,12 @@ expectType<{
 );
 
 expectType<{
-    foo: string;
-  } | null>(
-    useAsyncQuery<{ foo: string }>(
-      () =>
-        new Promise<{ foo: string }>((resolve) =>
-          setTimeout(() => resolve({ foo: "test" }), 0)
-        ),
-    ).data
-  );
-  
+  foo: string;
+} | null>(
+  useQuery<{ foo: string }>(
+    () =>
+      new Promise<{ foo: string }>((resolve) =>
+        setTimeout(() => resolve({ foo: "test" }), 0)
+      )
+  ).data
+);
