@@ -1,3 +1,5 @@
+/* eslint-disable  react-hooks/rules-of-hooks */
+
 import { expectType } from "tsd";
 import { useQuery } from "./use-query";
 
