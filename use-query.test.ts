@@ -3,7 +3,7 @@ import {
   act,
   RenderHookResult,
 } from "@testing-library/react-hooks";
-import { Result, useQuery } from "./use-query";
+import { QueryResult, useQuery } from "./use-query";
 
 class Deferred<T> {
   promise: Promise<T>;
@@ -32,7 +32,7 @@ describe("useQuery", () => {
     });
 
     describe("is called with variables", () => {
-      let renderHookResult: RenderHookResult<any, Result<string, string>>;
+      let renderHookResult: RenderHookResult<any, QueryResult<string, string>>;
       const onCompleted = jest.fn();
       const onError = jest.fn();
       beforeEach(() => {
@@ -224,7 +224,7 @@ describe("useQuery", () => {
     });
 
     describe("is called without variables", () => {
-      let renderHookResult: RenderHookResult<never, Result<string, never>>;
+      let renderHookResult: RenderHookResult<never, QueryResult<string, never>>;
       beforeEach(() => {
         renderHookResult = renderHook(() => useQuery<string, never>(mockQuery));
       });
@@ -239,7 +239,7 @@ describe("useQuery", () => {
     });
 
     describe("is called with skip set to true", () => {
-      let renderHookResult: RenderHookResult<any, Result<string, string>>;
+      let renderHookResult: RenderHookResult<any, QueryResult<string, string>>;
       beforeEach(() => {
         renderHookResult = renderHook(
           (options) => useQuery(mockQuery, options),

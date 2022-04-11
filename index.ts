@@ -1,2 +1,2 @@
-export { useQuery } from "./use-query";
-export { useLazyQuery } from "./use-lazy-query";
+export * from "./use-query";
+export * from "./use-lazy-query";

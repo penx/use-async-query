@@ -3,7 +3,7 @@ import {
   act,
   RenderHookResult,
 } from "@testing-library/react-hooks";
-import { Result, useLazyQuery } from "./use-lazy-query";
+import { LazyQueryResult, useLazyQuery } from "./use-lazy-query";
 
 class Deferred<T> {
   promise: Promise<T>;
@@ -32,7 +32,10 @@ describe("useLazyQuery", () => {
     });
 
     describe("is called with variables", () => {
-      let renderHookResult: RenderHookResult<any, Result<string, string>>;
+      let renderHookResult: RenderHookResult<
+        any,
+        LazyQueryResult<string, string>
+      >;
       const onCompleted = jest.fn();
       const onError = jest.fn();
       beforeEach(() => {
