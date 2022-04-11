@@ -19,7 +19,7 @@ class Deferred<T> {
 }
 
 describe("useAsyncQuery", () => {
-  describe("when an asynronous query", () => {
+  describe("when an asyncronous query", () => {
     let deferred: Deferred<string>;
     const mockQuery = jest.fn();
 
@@ -32,7 +32,7 @@ describe("useAsyncQuery", () => {
     });
 
     describe("is called with variables", () => {
-      let renderHookResult: RenderHookResult<any, Result<string>>;
+      let renderHookResult: RenderHookResult<any, Result<string, string>>;
       const onCompleted = jest.fn();
       const onError = jest.fn();
       beforeEach(() => {
@@ -95,7 +95,9 @@ describe("useAsyncQuery", () => {
           });
 
           it("should return previousData", () => {
-            expect(renderHookResult.result.current.previousData).toBe("resolved");
+            expect(renderHookResult.result.current.previousData).toBe(
+              "resolved"
+            );
           });
 
           describe("the second query resolves", () => {
@@ -111,7 +113,9 @@ describe("useAsyncQuery", () => {
               expect(renderHookResult.result.current.data).toBe("2nd resolved");
             });
             it("should return previousData from the first query", () => {
-              expect(renderHookResult.result.current.previousData).toBe("resolved");
+              expect(renderHookResult.result.current.previousData).toBe(
+                "resolved"
+              );
             });
           });
         });
@@ -221,9 +225,11 @@ describe("useAsyncQuery", () => {
     });
 
     describe("is called without variables", () => {
-      let renderHookResult: RenderHookResult<never, Result<string>>;
+      let renderHookResult: RenderHookResult<never, Result<string, never>>;
       beforeEach(() => {
-        renderHookResult = renderHook(() => useAsyncQuery<string, never>(mockQuery));
+        renderHookResult = renderHook(() =>
+          useAsyncQuery<string, never>(mockQuery)
+        );
       });
       it("should start with loading set to true", async () => {
         expect(mockQuery).toHaveBeenCalledWith();
@@ -236,7 +242,7 @@ describe("useAsyncQuery", () => {
     });
 
     describe("is called with skip set to true", () => {
-      let renderHookResult: RenderHookResult<any, Result<string>>;
+      let renderHookResult: RenderHookResult<any, Result<string, string>>;
       beforeEach(() => {
         renderHookResult = renderHook(
           (options) => useAsyncQuery(mockQuery, options),
@@ -274,6 +280,40 @@ describe("useAsyncQuery", () => {
             expect(renderHookResult.result.current.loading).toBe(false);
             expect(renderHookResult.result.current.data).toBe("resolved");
             expect(renderHookResult.result.all.length).toBe(3);
+          });
+        });
+      });
+      describe("refetch is called", () => {
+        beforeEach(() => {
+          renderHookResult.result.current.refetch("run2");
+        });
+        it("should call the query", () => {
+          expect(mockQuery).toHaveBeenCalledWith("run2");
+          expect(mockQuery).toHaveBeenCalledTimes(1);
+        });
+        describe("useQuery is called again", () => {
+          beforeEach(() => {
+            renderHookResult.rerender();
+          });
+          it("should set loading to true", () => {
+            expect(renderHookResult.result.current.error).toBe(null);
+            expect(renderHookResult.result.current.loading).toBe(true);
+            expect(renderHookResult.result.current.data).toBe(null);
+            expect(renderHookResult.result.all.length).toBe(2);
+          });
+          describe("the query resolves", () => {
+            beforeEach(async () => {
+              await act(async () => {
+                deferred.resolve("resolved");
+              });
+            });
+            it("should return with loading set to false", () => {
+              expect(mockQuery).toHaveBeenCalledTimes(1);
+              expect(renderHookResult.result.current.error).toBe(null);
+              expect(renderHookResult.result.current.loading).toBe(false);
+              expect(renderHookResult.result.current.data).toBe("resolved");
+              expect(renderHookResult.result.all.length).toBe(3);
+            });
           });
         });
       });

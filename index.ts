@@ -1,4 +1,4 @@
-import { useState, useRef, useMemo } from "react";
+import { useState, useRef, useMemo, useCallback } from "react";
 
 type Variables = Record<string, any>;
 
@@ -9,11 +9,12 @@ interface Options<TData, TVariables> {
   onError?: (error: any) => void;
 }
 
-export type Result<TData> = {
+export type Result<TData, TVariables = Variables> = {
   loading: boolean;
   error: any;
   data: TData | null;
   previousData: TData | null;
+  refetch: (variables?: TVariables | undefined) => void;
 };
 
 /**
@@ -24,7 +25,7 @@ export type Result<TData> = {
 function useAsyncQuery<TData = any, TVariables = Variables>(
   query: (variables?: TVariables) => Promise<TData>,
   options?: Options<TData, TVariables>
-): Result<TData> {
+): Result<TData, TVariables> {
   const { skip, onCompleted, onError } = options || {};
 
   const data = useRef<TData | null>(null);
@@ -35,18 +36,19 @@ function useAsyncQuery<TData = any, TVariables = Variables>(
   const [, forceUpdate] = useState(0);
   const variables =
     options && "variables" in options ? options.variables : undefined;
-  cancelLast.current = useMemo(() => {
-    cancelLast.current?.();
-    let isLatest = true;
-    if (skip) {
-      loading.current = false;
-      error.current = null;
-    } else {
+
+  const fetch = useCallback(
+    (refetchVariables: TVariables | undefined = variables) => {
+      cancelLast.current?.();
+      let isLatest = true;
       previousData.current = data.current;
       data.current = null;
       loading.current = true;
       error.current = null;
-      query(...(variables ? [variables] : []))
+      cancelLast.current = () => {
+        isLatest = false;
+      };
+      query(...(refetchVariables ? [refetchVariables] : []))
         .then((response) => {
           if (isLatest) {
             data.current = response;
@@ -55,6 +57,7 @@ function useAsyncQuery<TData = any, TVariables = Variables>(
             forceUpdate((x) => x + 1);
             onCompleted?.(response);
           }
+          return response;
         })
         .catch((e) => {
           if (isLatest) {
@@ -64,17 +67,18 @@ function useAsyncQuery<TData = any, TVariables = Variables>(
             onError?.(e);
           }
         });
-    }
-    return () => {
-      isLatest = false;
-    };
-  }, [query, variables, onCompleted, onError, skip]);
+    },
+    [query, variables, onCompleted, onError, skip]
+  );
+
+  useMemo(!skip ? fetch : () => null, [fetch, skip]);
 
   return {
     loading: loading.current,
     error: error.current,
     data: data.current,
     previousData: previousData.current,
+    refetch: fetch,
   };
 }
 
