@@ -1,9 +1,16 @@
 import { useCallback, useState } from "react";
 
-import { useQuery, QueryOptions, QueryResult } from "./use-query";
+import {
+  useQuery,
+  QueryOptions,
+  QueryResult,
+  QueryOptionsWithVariables,
+} from "./use-query";
 
-export type LazyQueryOptions<TData, TVariables> = Omit<
-  QueryOptions<TData, TVariables>,
+export type LazyQueryOptions<TData> = Omit<QueryOptions<TData>, "skip">;
+
+export type LazyQueryOptionsWithVariables<TData, TVariables> = Omit<
+  QueryOptionsWithVariables<TData, TVariables>,
   "skip"
 >;
 
@@ -18,9 +25,19 @@ export type LazyQueryResult<TData, TVariables> = [
   QueryResult<TData, TVariables> & { called?: boolean }
 ];
 
-export function useLazyQuery<TData = any, TVariables = Record<string, any>>(
+export function useLazyQuery<TData>(
+  query: () => Promise<TData>,
+  options?: LazyQueryOptions<TData>
+): LazyQueryResult<TData, never>;
+export function useLazyQuery<TData, TVariables>(
+  query: (variables: TVariables) => Promise<TData>,
+  options: LazyQueryOptionsWithVariables<TData, TVariables>
+): LazyQueryResult<TData, TVariables>;
+export function useLazyQuery<TData, TVariables>(
   query: (variables?: TVariables) => Promise<TData>,
-  options?: LazyQueryOptions<TData, TVariables>
+  options?:
+    | LazyQueryOptionsWithVariables<TData, TVariables>
+    | LazyQueryOptions<TData>
 ): LazyQueryResult<TData, TVariables> {
   const [execution, setExecution] = useState<{
     called: boolean;
