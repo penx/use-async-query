@@ -3,7 +3,12 @@ import {
   act,
   RenderHookResult,
 } from "@testing-library/react-hooks";
-import { QueryResult, useQuery } from "./use-query";
+import {
+  QueryOptions,
+  QueryOptionsWithVariables,
+  QueryResult,
+  useQuery,
+} from "./use-query";
 
 class Deferred<T> {
   promise: Promise<T>;
@@ -21,7 +26,7 @@ class Deferred<T> {
 describe("useQuery", () => {
   describe("when an asyncronous query with variables", () => {
     let deferred: Deferred<string>;
-    const mockQuery = jest.fn<Promise<string>, [string]>();
+    const mockQuery = jest.fn<Promise<string>, [{ option: string }]>();
 
     beforeEach(() => {
       deferred = new Deferred<string>();
@@ -32,14 +37,24 @@ describe("useQuery", () => {
     });
 
     describe("is called", () => {
-      let renderHookResult: RenderHookResult<any, QueryResult<string, string>>;
+      let renderHookResult: RenderHookResult<
+        QueryOptionsWithVariables<string, { option: string }>,
+        QueryResult<string, { option: string }>
+      >;
       const onCompleted = jest.fn<void, [string]>();
       const onError = jest.fn<void, [any]>();
       beforeEach(() => {
-        renderHookResult = renderHook(
-          (options) => useQuery<string, string>(mockQuery, options),
+        renderHookResult = renderHook<
+          QueryOptionsWithVariables<string, { option: string }>,
+          QueryResult<string, { option: string }>
+        >(
+          (options) => useQuery<string, { option: string }>(mockQuery, options),
           {
-            initialProps: { variables: "run1", onCompleted, onError },
+            initialProps: {
+              variables: { option: "run1" },
+              onCompleted,
+              onError,
+            },
           }
         );
       });
@@ -48,7 +63,7 @@ describe("useQuery", () => {
         onError.mockReset();
       });
       it("should start with loading set to true", async () => {
-        expect(mockQuery).toHaveBeenCalledWith("run1");
+        expect(mockQuery).toHaveBeenCalledWith({ option: "run1" });
         expect(renderHookResult.result.current.error).toBe(null);
         expect(renderHookResult.result.current.loading).toBe(true);
         expect(renderHookResult.result.current.data).toBe(null);
@@ -77,17 +92,41 @@ describe("useQuery", () => {
           expect(renderHookResult.result.current.previousData).toBe(null);
         });
 
+        describe("the hook is called again with the same props", () => {
+          beforeEach(async () => {
+            await act(async () => {
+              renderHookResult.rerender({
+                variables: { option: "run1" },
+                onCompleted,
+                onError,
+              });
+            });
+          });
+          it("should not call the query again", () => {
+            expect(mockQuery).toHaveBeenCalledTimes(1);
+          });
+          it("should not call onCompleted again", () => {
+            expect(onCompleted).toHaveBeenCalledTimes(1);
+          });
+          it("should not call onError", () => {
+            expect(onError).not.toHaveBeenCalled();
+          });
+          it("should not return any previousData", () => {
+            expect(renderHookResult.result.current.previousData).toBe(null);
+          });
+        });
+
         describe("is called with different variables", () => {
           let deferred2: Deferred<string>;
           beforeEach(() => {
             deferred2 = new Deferred<string>();
             mockQuery.mockReturnValue(deferred2.promise);
-            renderHookResult.rerender({ variables: "run2" });
+            renderHookResult.rerender({ variables: { option: "run2" } });
           });
 
           it("should return with loading=true and data=null", () => {
             expect(mockQuery).toHaveBeenCalledTimes(2);
-            expect(mockQuery).toHaveBeenCalledWith("run2");
+            expect(mockQuery).toHaveBeenCalledWith({ option: "run2" });
             expect(renderHookResult.result.current.error).toBe(null);
             expect(renderHookResult.result.current.loading).toBe(true);
             expect(renderHookResult.result.current.data).toBe(null);
@@ -139,12 +178,12 @@ describe("useQuery", () => {
         beforeEach(() => {
           deferred2 = new Deferred<string>();
           mockQuery.mockReturnValue(deferred2.promise);
-          renderHookResult.rerender({ variables: "run2" });
+          renderHookResult.rerender({ variables: { option: "run2" } });
         });
 
         it("should return with loading=true and data=null", () => {
           expect(mockQuery).toHaveBeenCalledTimes(2);
-          expect(mockQuery).toHaveBeenCalledWith("run2");
+          expect(mockQuery).toHaveBeenCalledWith({ option: "run2" });
           expect(renderHookResult.result.current.error).toBe(null);
           expect(renderHookResult.result.current.loading).toBe(true);
           expect(renderHookResult.result.current.data).toBe(null);
@@ -224,10 +263,16 @@ describe("useQuery", () => {
     });
 
     describe("is called with skip set to true", () => {
-      let renderHookResult: RenderHookResult<any, QueryResult<string, string>>;
+      let renderHookResult: RenderHookResult<
+        QueryOptionsWithVariables<string, { option: string }>,
+        QueryResult<string, { option: string }>
+      >;
       beforeEach(() => {
-        renderHookResult = renderHook(
-          (options) => useQuery<string, string>(mockQuery, options),
+        renderHookResult = renderHook<
+          QueryOptionsWithVariables<string, { option: string }>,
+          QueryResult<string, { option: string }>
+        >(
+          (options) => useQuery<string, { option: string }>(mockQuery, options),
           { initialProps: { skip: true } }
         );
       });
@@ -240,10 +285,10 @@ describe("useQuery", () => {
       });
       describe("is called again with skip not set", () => {
         beforeEach(() => {
-          renderHookResult.rerender({ variables: "run2" });
+          renderHookResult.rerender({ variables: { option: "run2" } });
         });
         it("should set loading to true", () => {
-          expect(mockQuery).toHaveBeenCalledWith("run2");
+          expect(mockQuery).toHaveBeenCalledWith({ option: "run2" });
           expect(mockQuery).toHaveBeenCalledTimes(1);
           expect(renderHookResult.result.current.error).toBe(null);
           expect(renderHookResult.result.current.loading).toBe(true);
@@ -265,14 +310,15 @@ describe("useQuery", () => {
           });
         });
       });
+      // TODO: refetch with same variables
       describe("refetch is called", () => {
         beforeEach(() => {
           act(() => {
-            renderHookResult.result.current.refetch("run2");
+            renderHookResult.result.current.refetch({ option: "run2" });
           });
         });
         it("should call the query", () => {
-          expect(mockQuery).toHaveBeenCalledWith("run2");
+          expect(mockQuery).toHaveBeenCalledWith({ option: "run2" });
           expect(mockQuery).toHaveBeenCalledTimes(1);
         });
         it("should set loading to true", () => {
@@ -312,9 +358,15 @@ describe("useQuery", () => {
     });
 
     describe("is called without variables", () => {
-      let renderHookResult: RenderHookResult<never, QueryResult<string, never>>;
+      let renderHookResult: RenderHookResult<
+        QueryOptions<string>,
+        QueryResult<string, never>
+      >;
       beforeEach(() => {
-        renderHookResult = renderHook(() => useQuery<string>(mockQuery));
+        renderHookResult = renderHook<
+          QueryOptions<string>,
+          QueryResult<string, never>
+        >(() => useQuery<string>(mockQuery));
       });
       it("should start with loading set to true", async () => {
         expect(mockQuery).toHaveBeenCalled();
