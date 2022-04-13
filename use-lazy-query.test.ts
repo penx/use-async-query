@@ -3,7 +3,11 @@ import {
   act,
   RenderHookResult,
 } from "@testing-library/react-hooks";
-import { LazyQueryResult, useLazyQuery } from "./use-lazy-query";
+import {
+  LazyQueryOptionsWithVariables,
+  LazyQueryResult,
+  useLazyQuery,
+} from "./use-lazy-query";
 
 class Deferred<T> {
   promise: Promise<T>;
@@ -21,7 +25,7 @@ class Deferred<T> {
 describe("useLazyQuery", () => {
   describe("when an asyncronous query", () => {
     let deferred: Deferred<string>;
-    const mockQuery = jest.fn<Promise<string>, [string]>();
+    const mockQuery = jest.fn<Promise<string>, [{ option: string }]>();
 
     beforeEach(() => {
       deferred = new Deferred<string>();
@@ -33,15 +37,25 @@ describe("useLazyQuery", () => {
 
     describe("is called with variables", () => {
       let renderHookResult: RenderHookResult<
-        any,
-        LazyQueryResult<string, string>
+        LazyQueryOptionsWithVariables<string, { option: string }>,
+        LazyQueryResult<string, { option: string }>
       >;
-      const onCompleted = jest.fn();
-      const onError = jest.fn();
+      const onCompleted = jest.fn<void, [string]>();
+      const onError = jest.fn<void, [any]>();
       beforeEach(() => {
-        renderHookResult = renderHook(
-          (options) => useLazyQuery(mockQuery, options),
-          { initialProps: { variables: "run1", onCompleted, onError } }
+        renderHookResult = renderHook<
+          LazyQueryOptionsWithVariables<string, { option: string }>,
+          LazyQueryResult<string, { option: string }>
+        >(
+          (options) =>
+            useLazyQuery<string, { option: string }>(mockQuery, options),
+          {
+            initialProps: {
+              variables: { option: "run1" },
+              onCompleted,
+              onError,
+            },
+          }
         );
       });
       it("should start with loading set to false", async () => {
@@ -54,11 +68,11 @@ describe("useLazyQuery", () => {
       describe("refetch is called", () => {
         beforeEach(() => {
           act(() => {
-            renderHookResult.result.current[1].refetch("run2");
+            renderHookResult.result.current[1].refetch({ option: "run2" });
           });
         });
         it("should call the query", () => {
-          expect(mockQuery).toHaveBeenCalledWith("run2");
+          expect(mockQuery).toHaveBeenCalledWith({ option: "run2" });
           expect(mockQuery).toHaveBeenCalledTimes(1);
           expect(renderHookResult.result.all.length).toBe(2);
         });
