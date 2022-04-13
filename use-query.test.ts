@@ -19,9 +19,9 @@ class Deferred<T> {
 }
 
 describe("useQuery", () => {
-  describe("when an asyncronous query", () => {
+  describe("when an asyncronous query with variables", () => {
     let deferred: Deferred<string>;
-    const mockQuery = jest.fn();
+    const mockQuery = jest.fn<Promise<string>, [string]>();
 
     beforeEach(() => {
       deferred = new Deferred<string>();
@@ -31,10 +31,10 @@ describe("useQuery", () => {
       mockQuery.mockReset();
     });
 
-    describe("is called with variables", () => {
+    describe("is called", () => {
       let renderHookResult: RenderHookResult<any, QueryResult<string, string>>;
-      const onCompleted = jest.fn();
-      const onError = jest.fn();
+      const onCompleted = jest.fn<void, [string]>();
+      const onError = jest.fn<void, [any]>();
       beforeEach(() => {
         renderHookResult = renderHook(
           (options) => useQuery<string, string>(mockQuery, options),
@@ -223,26 +223,11 @@ describe("useQuery", () => {
       });
     });
 
-    describe("is called without variables", () => {
-      let renderHookResult: RenderHookResult<never, QueryResult<string, never>>;
-      beforeEach(() => {
-        renderHookResult = renderHook(() => useQuery<string, never>(mockQuery));
-      });
-      it("should start with loading set to true", async () => {
-        expect(mockQuery).toHaveBeenCalled();
-        expect(mockQuery).toHaveBeenCalledTimes(1);
-        expect(renderHookResult.result.current.error).toBe(null);
-        expect(renderHookResult.result.current.loading).toBe(true);
-        expect(renderHookResult.result.current.data).toBe(null);
-        expect(renderHookResult.result.all.length).toBe(1);
-      });
-    });
-
     describe("is called with skip set to true", () => {
       let renderHookResult: RenderHookResult<any, QueryResult<string, string>>;
       beforeEach(() => {
         renderHookResult = renderHook(
-          (options) => useQuery(mockQuery, options),
+          (options) => useQuery<string, string>(mockQuery, options),
           { initialProps: { skip: true } }
         );
       });
@@ -310,6 +295,34 @@ describe("useQuery", () => {
             expect(renderHookResult.result.all.length).toBe(3);
           });
         });
+      });
+    });
+  });
+
+  describe("when an asyncronous query without variables", () => {
+    let deferred: Deferred<string>;
+    const mockQuery = jest.fn<Promise<string>, never>();
+
+    beforeEach(() => {
+      deferred = new Deferred<string>();
+      mockQuery.mockReturnValue(deferred.promise);
+    });
+    afterEach(() => {
+      mockQuery.mockReset();
+    });
+
+    describe("is called without variables", () => {
+      let renderHookResult: RenderHookResult<never, QueryResult<string, never>>;
+      beforeEach(() => {
+        renderHookResult = renderHook(() => useQuery<string>(mockQuery));
+      });
+      it("should start with loading set to true", async () => {
+        expect(mockQuery).toHaveBeenCalled();
+        expect(mockQuery).toHaveBeenCalledTimes(1);
+        expect(renderHookResult.result.current.error).toBe(null);
+        expect(renderHookResult.result.current.loading).toBe(true);
+        expect(renderHookResult.result.current.data).toBe(null);
+        expect(renderHookResult.result.all.length).toBe(1);
       });
     });
   });
