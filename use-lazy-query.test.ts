@@ -21,7 +21,7 @@ class Deferred<T> {
 describe("useLazyQuery", () => {
   describe("when an asyncronous query", () => {
     let deferred: Deferred<string>;
-    const mockQuery = jest.fn();
+    const mockQuery = jest.fn<Promise<string>, [string]>();
 
     beforeEach(() => {
       deferred = new Deferred<string>();
