@@ -229,7 +229,7 @@ describe("useQuery", () => {
         renderHookResult = renderHook(() => useQuery<string, never>(mockQuery));
       });
       it("should start with loading set to true", async () => {
-        expect(mockQuery).toHaveBeenCalledWith();
+        expect(mockQuery).toHaveBeenCalled();
         expect(mockQuery).toHaveBeenCalledTimes(1);
         expect(renderHookResult.result.current.error).toBe(null);
         expect(renderHookResult.result.current.loading).toBe(true);
@@ -282,35 +282,32 @@ describe("useQuery", () => {
       });
       describe("refetch is called", () => {
         beforeEach(() => {
-          renderHookResult.result.current.refetch("run2");
+          act(() => {
+            renderHookResult.result.current.refetch("run2");
+          });
         });
         it("should call the query", () => {
           expect(mockQuery).toHaveBeenCalledWith("run2");
           expect(mockQuery).toHaveBeenCalledTimes(1);
         });
-        describe("useQuery is called again", () => {
-          beforeEach(() => {
-            renderHookResult.rerender();
+        it("should set loading to true", () => {
+          expect(renderHookResult.result.current.error).toBe(null);
+          expect(renderHookResult.result.current.loading).toBe(true);
+          expect(renderHookResult.result.current.data).toBe(null);
+          expect(renderHookResult.result.all.length).toBe(2);
+        });
+        describe("the query resolves", () => {
+          beforeEach(async () => {
+            await act(async () => {
+              deferred.resolve("resolved");
+            });
           });
-          it("should set loading to true", () => {
+          it("should return with loading set to false", () => {
+            expect(mockQuery).toHaveBeenCalledTimes(1);
             expect(renderHookResult.result.current.error).toBe(null);
-            expect(renderHookResult.result.current.loading).toBe(true);
-            expect(renderHookResult.result.current.data).toBe(null);
-            expect(renderHookResult.result.all.length).toBe(2);
-          });
-          describe("the query resolves", () => {
-            beforeEach(async () => {
-              await act(async () => {
-                deferred.resolve("resolved");
-              });
-            });
-            it("should return with loading set to false", () => {
-              expect(mockQuery).toHaveBeenCalledTimes(1);
-              expect(renderHookResult.result.current.error).toBe(null);
-              expect(renderHookResult.result.current.loading).toBe(false);
-              expect(renderHookResult.result.current.data).toBe("resolved");
-              expect(renderHookResult.result.all.length).toBe(3);
-            });
+            expect(renderHookResult.result.current.loading).toBe(false);
+            expect(renderHookResult.result.current.data).toBe("resolved");
+            expect(renderHookResult.result.all.length).toBe(3);
           });
         });
       });
