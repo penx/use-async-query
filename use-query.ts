@@ -90,12 +90,21 @@ function useQuery<TData = any, TVariables = Variables>(
     }
   }, [fetch, skip]);
 
+  const refetch = useCallback(
+    (refetchVariables?: TVariables | undefined) => {
+      const result = fetch(refetchVariables);
+      forceUpdate((x) => x + 1);
+      return result;
+    },
+    [fetch]
+  );
+
   return {
     loading: loading.current,
     error: error.current,
     data: data.current,
     previousData: previousData.current,
-    refetch: fetch,
+    refetch,
   };
 }
 
