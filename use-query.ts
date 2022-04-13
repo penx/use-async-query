@@ -1,6 +1,15 @@
 import { useState, useRef, useMemo, useCallback } from "react";
+import { equal } from "@wry/equality";
 
-type Variables = Record<string, any>;
+export type Variables = Record<string, any>;
+
+const useMemoWhenEqual = <T>(value: T) => {
+  const ref = useRef(value);
+  if (!equal(ref.current, value)) {
+    ref.current = value;
+  }
+  return ref.current;
+};
 
 export interface QueryOptions<TData> {
   skip?: boolean;
@@ -50,8 +59,9 @@ function useQuery<TData, TVariables>(
   const error = useRef<any>(null);
   const cancelLast = useRef<() => void>();
   const [, forceUpdate] = useState(0);
-  const variables =
+  const passedVariables =
     options && "variables" in options ? options.variables : undefined;
+  const variables = useMemoWhenEqual(passedVariables);
 
   const fetch: (
     refetchVariables?: TVariables | undefined
