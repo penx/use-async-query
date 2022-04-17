@@ -17,20 +17,23 @@ export interface QueryOptions<TData> {
   onError?: (error: any) => void;
 }
 
-export interface QueryOptionsWithVariables<TData, TVariables> {
-  variables?: TVariables;
+export interface QueryOptionsWithVariables<
+  TData,
+  TVariables extends Variables
+> {
+  variables: TVariables;
   skip?: boolean;
   onCompleted?: (data: TData) => void;
   onError?: (error: any) => void;
 }
 
-export type QueryResult<TData, TVariables = Variables> = {
+export type QueryResult<TData, TVariables extends Variables = Variables> = {
   loading: boolean;
   error: any;
   data: TData | null;
   previousData: TData | null;
   refetch: (
-    variables?: TVariables | undefined
+    variables?: Partial<TVariables> | undefined
   ) => Promise<QueryResult<TData, TVariables>>;
 };
 
@@ -43,11 +46,11 @@ function useQuery<TData>(
   query: () => Promise<TData>,
   options?: QueryOptions<TData>
 ): QueryResult<TData, never>;
-function useQuery<TData, TVariables>(
+function useQuery<TData, TVariables extends Variables>(
   query: (variables: TVariables) => Promise<TData>,
   options: QueryOptionsWithVariables<TData, TVariables>
 ): QueryResult<TData, TVariables>;
-function useQuery<TData, TVariables>(
+function useQuery<TData, TVariables extends Variables>(
   query: (variables?: TVariables) => Promise<TData>,
   options?: QueryOptionsWithVariables<TData, TVariables> | QueryOptions<TData>
 ): QueryResult<TData, TVariables> {
@@ -64,9 +67,12 @@ function useQuery<TData, TVariables>(
   const variables = useMemoWhenEqual(passedVariables);
 
   const fetch: (
-    refetchVariables?: TVariables | undefined
+    refetchVariables?: Partial<TVariables> | undefined
   ) => Promise<QueryResult<TData, TVariables>> = useCallback(
-    async (refetchVariables: TVariables | undefined = variables) => {
+    async (refetchVariables: Partial<TVariables> | undefined) => {
+      const mergedVariables = refetchVariables
+        ? Object.assign({}, variables, refetchVariables)
+        : variables;
       cancelLast.current?.();
       let isLatest = true;
       previousData.current = data.current;
@@ -76,7 +82,7 @@ function useQuery<TData, TVariables>(
       cancelLast.current = () => {
         isLatest = false;
       };
-      return query(...(refetchVariables ? [refetchVariables] : []))
+      return query(...(mergedVariables ? [mergedVariables] : []))
         .then((response) => {
           if (isLatest) {
             data.current = response;
@@ -115,7 +121,7 @@ function useQuery<TData, TVariables>(
   }, [fetch, skip]);
 
   const refetch = useCallback(
-    (refetchVariables?: TVariables | undefined) => {
+    (refetchVariables?: Partial<TVariables> | undefined) => {
       const result = fetch(refetchVariables);
       forceUpdate((x) => x + 1);
       return result;

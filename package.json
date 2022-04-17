@@ -5,6 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "jest && tsd && npm run lint",
+    "test:watch": "jest --watch",
     "build": "tsc -p tsconfig.prod.json",
     "lint": "eslint '**/*.ts'"
   },

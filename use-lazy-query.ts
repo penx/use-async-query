@@ -2,6 +2,7 @@ import { useCallback, useState } from "react";
 
 import {
   useQuery,
+  Variables,
   QueryOptions,
   QueryResult,
   QueryOptionsWithVariables,
@@ -9,12 +10,12 @@ import {
 
 export type LazyQueryOptions<TData> = Omit<QueryOptions<TData>, "skip">;
 
-export type LazyQueryOptionsWithVariables<TData, TVariables> = Omit<
-  QueryOptionsWithVariables<TData, TVariables>,
-  "skip"
->;
+export type LazyQueryOptionsWithVariables<
+  TData,
+  TVariables extends Variables
+> = Omit<QueryOptionsWithVariables<TData, TVariables>, "skip">;
 
-export type LazyQueryResult<TData, TVariables> = [
+export type LazyQueryResult<TData, TVariables extends Variables> = [
   (
     options?:
       | {
@@ -29,11 +30,11 @@ export function useLazyQuery<TData>(
   query: () => Promise<TData>,
   options?: LazyQueryOptions<TData>
 ): LazyQueryResult<TData, never>;
-export function useLazyQuery<TData, TVariables>(
+export function useLazyQuery<TData, TVariables extends Variables>(
   query: (variables: TVariables) => Promise<TData>,
   options: LazyQueryOptionsWithVariables<TData, TVariables>
 ): LazyQueryResult<TData, TVariables>;
-export function useLazyQuery<TData, TVariables>(
+export function useLazyQuery<TData, TVariables extends Variables>(
   query: (variables?: TVariables) => Promise<TData>,
   options?:
     | LazyQueryOptionsWithVariables<TData, TVariables>
@@ -49,11 +50,7 @@ export function useLazyQuery<TData, TVariables>(
   let result: QueryResult<TData, TVariables> & { called?: boolean } = useQuery<
     TData,
     TVariables
-  >(query, {
-    ...options,
-    ...execution.options,
-    skip: true,
-  });
+  >(query, Object.assign({}, options, execution.options, { skip: true }));
 
   if (!execution.called) {
     result = {
