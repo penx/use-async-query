@@ -2,7 +2,8 @@
 
 Mirrors the functionality of
 [Apollo client's useQuery hook](https://www.apollographql.com/docs/react/data/queries/#usequery-api),
-but with a "query" being any async function rather than GQL statement.
+but with a "query" being any async function of the format
+`(variables: Record<string, any>) => any` rather than a GQL statement.
 
 ## Usage
 
