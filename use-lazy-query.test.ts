@@ -97,6 +97,41 @@ describe("useLazyQuery", () => {
           });
         });
       });
+
+      describe("execute is called", () => {
+        beforeEach(() => {
+          act(() => {
+            renderHookResult.result.current[0]({
+              variables: { option: "run2" },
+            });
+          });
+        });
+        it("should call the query", () => {
+          expect(mockQuery).toHaveBeenCalledWith({ option: "run2" });
+          expect(mockQuery).toHaveBeenCalledTimes(1);
+          expect(renderHookResult.result.all.length).toBe(2);
+        });
+        it("should set loading to true", () => {
+          expect(renderHookResult.result.current[1].error).toBe(null);
+          expect(renderHookResult.result.current[1].loading).toBe(true);
+          expect(renderHookResult.result.current[1].data).toBe(null);
+          expect(renderHookResult.result.all.length).toBe(2);
+        });
+        describe("the query resolves", () => {
+          beforeEach(async () => {
+            await act(async () => {
+              deferred.resolve("resolved");
+            });
+          });
+          it("should return with loading set to false", () => {
+            expect(mockQuery).toHaveBeenCalledTimes(1);
+            expect(renderHookResult.result.current[1].error).toBe(null);
+            expect(renderHookResult.result.current[1].loading).toBe(false);
+            expect(renderHookResult.result.current[1].data).toBe("resolved");
+            expect(renderHookResult.result.all.length).toBe(3);
+          });
+        });
+      });
     });
   });
 });
