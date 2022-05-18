@@ -4,6 +4,7 @@ import {
   RenderHookResult,
 } from "@testing-library/react-hooks";
 import {
+  LazyQueryOptionsWithPartialVariables,
   LazyQueryOptionsWithVariables,
   LazyQueryResult,
   LazyQueryResultVariablesRequiredInRefetch,
@@ -24,7 +25,7 @@ class Deferred<T> {
 }
 
 describe("useLazyQuery", () => {
-  describe("when an asyncronous query", () => {
+  describe("when an asyncronous query with variables", () => {
     let deferred: Deferred<string>;
     const mockQuery = jest.fn<Promise<string>, [{ option: string }]>();
 
@@ -134,7 +135,26 @@ describe("useLazyQuery", () => {
         });
       });
     });
-    describe("is called without variables", () => {
+    describe("is called without options or variables", () => {
+      let renderHookResult: RenderHookResult<
+        LazyQueryOptionsWithVariables<string, { option: string }>,
+        LazyQueryResultVariablesRequiredInRefetch<string, { option: string }>
+      >;
+      beforeEach(() => {
+        renderHookResult = renderHook<
+          LazyQueryOptionsWithVariables<string, { option: string }>,
+          LazyQueryResultVariablesRequiredInRefetch<string, { option: string }>
+        >(() => useLazyQuery<string, { option: string }>(mockQuery));
+      });
+      it("should start with loading set to false", async () => {
+        expect(mockQuery).toHaveBeenCalledTimes(0);
+        expect(renderHookResult.result.current[1].error).toBe(null);
+        expect(renderHookResult.result.current[1].loading).toBe(false);
+        expect(renderHookResult.result.current[1].data).toBe(null);
+        expect(renderHookResult.result.all.length).toBe(1);
+      });
+    });
+    describe("is called with options but no variables", () => {
       let renderHookResult: RenderHookResult<
         LazyQueryOptionsWithVariables<string, { option: string }>,
         LazyQueryResultVariablesRequiredInRefetch<string, { option: string }>
@@ -143,15 +163,18 @@ describe("useLazyQuery", () => {
       const onError = jest.fn<void, [any]>();
       beforeEach(() => {
         renderHookResult = renderHook<
-          LazyQueryOptionsWithVariables<string, { option: string }>,
+          LazyQueryOptionsWithPartialVariables<string, { option: string }>,
           LazyQueryResultVariablesRequiredInRefetch<string, { option: string }>
-        >(() => useLazyQuery<string, { option: string }>(mockQuery), {
-          initialProps: {
-            variables: { option: "run1" },
-            onCompleted,
-            onError,
-          },
-        });
+        >(
+          (options) =>
+            useLazyQuery<string, { option: string }>(mockQuery, options),
+          {
+            initialProps: {
+              onCompleted,
+              onError,
+            },
+          }
+        );
       });
       it("should start with loading set to false", async () => {
         expect(mockQuery).toHaveBeenCalledTimes(0);
