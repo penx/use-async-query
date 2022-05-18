@@ -8,6 +8,9 @@ jobs:
       - run: npm i
       - run: npm run build
       - run: npm run test
+      - uses: codecov/codecov-action@v3.1.0
+        with:
+          files: coverage/lcov.info
 
   automerge:
     needs: build-lint-test
