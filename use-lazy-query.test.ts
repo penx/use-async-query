@@ -6,6 +6,7 @@ import {
 import {
   LazyQueryOptionsWithVariables,
   LazyQueryResult,
+  LazyQueryResultVariablesRequiredInRefetch,
   useLazyQuery,
 } from "./use-lazy-query";
 
@@ -131,6 +132,33 @@ describe("useLazyQuery", () => {
             expect(renderHookResult.result.all.length).toBe(3);
           });
         });
+      });
+    });
+    describe("is called without variables", () => {
+      let renderHookResult: RenderHookResult<
+        LazyQueryOptionsWithVariables<string, { option: string }>,
+        LazyQueryResultVariablesRequiredInRefetch<string, { option: string }>
+      >;
+      const onCompleted = jest.fn<void, [string]>();
+      const onError = jest.fn<void, [any]>();
+      beforeEach(() => {
+        renderHookResult = renderHook<
+          LazyQueryOptionsWithVariables<string, { option: string }>,
+          LazyQueryResultVariablesRequiredInRefetch<string, { option: string }>
+        >(() => useLazyQuery<string, { option: string }>(mockQuery), {
+          initialProps: {
+            variables: { option: "run1" },
+            onCompleted,
+            onError,
+          },
+        });
+      });
+      it("should start with loading set to false", async () => {
+        expect(mockQuery).toHaveBeenCalledTimes(0);
+        expect(renderHookResult.result.current[1].error).toBe(null);
+        expect(renderHookResult.result.current[1].loading).toBe(false);
+        expect(renderHookResult.result.current[1].data).toBe(null);
+        expect(renderHookResult.result.all.length).toBe(1);
       });
     });
   });
