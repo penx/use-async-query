@@ -17,25 +17,24 @@ export interface QueryOptions<TData> {
   onError?: (error: any) => void;
 }
 
-export interface QueryOptionsWithVariables<
-  TData,
-  TVariables extends Variables
-> {
+export interface QueryOptionsWithVariables<TData, TVariables extends Variables>
+  extends QueryOptions<TData> {
   variables: TVariables;
-  skip?: boolean;
-  onCompleted?: (data: TData) => void;
-  onError?: (error: any) => void;
 }
 
-export type QueryResult<TData, TVariables extends Variables = Variables> = {
+export type BaseQueryResult<TData> = {
   loading: boolean;
   error: any;
   data: TData | null;
   previousData: TData | null;
+};
+
+export interface QueryResult<TData, TVariables extends Variables = Variables>
+  extends BaseQueryResult<TData> {
   refetch: (
     variables?: Partial<TVariables> | undefined
   ) => Promise<QueryResult<TData, TVariables>>;
-};
+}
 
 /**
  * Mirrors the functionality of
