@@ -28,13 +28,12 @@ describe("useLazyQuery", () => {
   describe("when an asyncronous query with variables", () => {
     let deferred: Deferred<string>;
     const mockQuery = jest.fn<Promise<string>, [{ option: string }]>();
-
+    afterEach(() => {
+      mockQuery.mockReset();
+    });
     beforeEach(() => {
       deferred = new Deferred<string>();
       mockQuery.mockReturnValue(deferred.promise);
-    });
-    afterEach(() => {
-      mockQuery.mockReset();
     });
 
     describe("is called with variables", () => {
@@ -44,6 +43,10 @@ describe("useLazyQuery", () => {
       >;
       const onCompleted = jest.fn<void, [string]>();
       const onError = jest.fn<void, [any]>();
+      afterEach(() => {
+        onCompleted.mockReset();
+        onError.mockReset();
+      });
       beforeEach(() => {
         renderHookResult = renderHook<
           LazyQueryOptionsWithVariables<string, { option: string }>,
@@ -60,6 +63,7 @@ describe("useLazyQuery", () => {
           }
         );
       });
+
       it("should start with loading set to false", async () => {
         expect(mockQuery).toHaveBeenCalledTimes(0);
         expect(renderHookResult.result.current[1].error).toBe(null);
@@ -133,6 +137,70 @@ describe("useLazyQuery", () => {
             expect(renderHookResult.result.all.length).toBe(3);
           });
         });
+        describe("the query rejects", () => {
+          beforeEach(async () => {
+            await act(async () => {
+              deferred.reject("some error");
+            });
+          });
+          it("should call onError and return the error", () => {
+            expect(mockQuery).toHaveBeenCalledTimes(1);
+            expect(onError).toHaveBeenCalledTimes(1);
+            expect(renderHookResult.result.all.length).toBe(3);
+            expect(renderHookResult.result.current[1].error).toEqual(
+              "some error"
+            );
+            expect(renderHookResult.result.current[1].loading).toBe(false);
+            expect(renderHookResult.result.current[1].data).toBe(null);
+          });
+        });
+        describe("execute is called with different variables", () => {
+          let deferred2: Deferred<string>;
+          beforeEach(async () => {
+            deferred2 = new Deferred<string>();
+            mockQuery.mockReturnValue(deferred2.promise);
+            await act(async () => {
+              renderHookResult.result.current[0]({
+                variables: { option: "run3" },
+              });
+            });
+          });
+          it("should call the query", () => {
+            expect(mockQuery).toHaveBeenCalledWith({ option: "run3" });
+            expect(renderHookResult.result.current[1].error).toBe(null);
+            expect(renderHookResult.result.current[1].loading).toBe(true);
+            expect(renderHookResult.result.current[1].data).toBe(null);
+          });
+          describe("the first query rejects", () => {
+            beforeEach(async () => {
+              await act(async () => {
+                deferred.reject("an error");
+              });
+            });
+            it("should not call onError or return the error", () => {
+              expect(onError).toHaveBeenCalledTimes(0);
+              expect(renderHookResult.result.current[1].error).toBe(null);
+              expect(renderHookResult.result.current[1].loading).toBe(true);
+              expect(renderHookResult.result.current[1].data).toBe(null);
+            });
+            describe("the second query resolves", () => {
+              beforeEach(async () => {
+                await act(async () => {
+                  deferred2.resolve("2nd resolved");
+                });
+              });
+              it("should return with loading set to false", () => {
+                expect(renderHookResult.result.current[1].error).toBe(null);
+                expect(renderHookResult.result.current[1].loading).toBe(false);
+                expect(renderHookResult.result.current[1].data).toBe(
+                  "2nd resolved"
+                );
+                expect(onError).toHaveBeenCalledTimes(0);
+                expect(mockQuery).toHaveBeenCalledTimes(2);
+              });
+            });
+          });
+        });
       });
     });
     describe("is called without options or variables", () => {
@@ -161,6 +229,10 @@ describe("useLazyQuery", () => {
       >;
       const onCompleted = jest.fn<void, [string]>();
       const onError = jest.fn<void, [any]>();
+      afterEach(() => {
+        onCompleted.mockReset();
+        onError.mockReset();
+      });
       beforeEach(() => {
         renderHookResult = renderHook<
           LazyQueryOptionsWithPartialVariables<string, { option: string }>,
