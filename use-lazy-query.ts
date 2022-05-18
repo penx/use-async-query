@@ -16,10 +16,17 @@ export type LazyQueryOptionsWithVariables<
   TVariables extends Variables
 > = Omit<QueryOptionsWithVariables<TData, TVariables>, "skip">;
 
+export interface QueryOptionsWithMaybeVariables<
+  TData,
+  TVariables extends Variables
+> extends QueryOptions<TData> {
+  variables?: TVariables;
+}
+
 export type LazyQueryOptionsWithPartialVariables<
   TData,
   TPartialVariables extends Variables
-> = Omit<QueryOptionsWithVariables<TData, TPartialVariables>, "skip">;
+> = Omit<QueryOptionsWithMaybeVariables<TData, TPartialVariables>, "skip">;
 
 export type LazyQueryResult<TData, TVariables extends Variables> = [
   (
