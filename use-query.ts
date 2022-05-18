@@ -105,7 +105,13 @@ function useQuery<TData, TVariables extends Variables>(
             forceUpdate((x) => x + 1);
             onError?.(e);
           }
-          throw e;
+          return {
+            loading: loading.current,
+            error: e,
+            data: data.current,
+            previousData: previousData.current,
+            refetch: fetch,
+          };
         });
     },
     [query, variables, onCompleted, onError]
@@ -113,9 +119,7 @@ function useQuery<TData, TVariables extends Variables>(
 
   useMemo(async () => {
     if (!skip) {
-      try {
-        await fetch();
-      } catch (e) {}
+      await fetch();
     }
   }, [fetch, skip]);
 
