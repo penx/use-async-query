@@ -5,6 +5,8 @@ Mirrors the functionality of
 but with a "query" being any async function of the format
 `(variables: Record<string, any>) => any` rather than a GQL statement.
 
+[![codecov](https://codecov.io/gh/penx/use-async-query/branch/main/graph/badge.svg)](https://codecov.io/gh/penx/use-async-query)
+
 ## Usage
 
 ```sh
