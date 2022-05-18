@@ -29,13 +29,13 @@ describe("useQuery", () => {
     type QueryResponse = string;
     let deferred: Deferred<QueryResponse>;
     const mockQuery = jest.fn<Promise<QueryResponse>, [QueryVariables]>();
+    afterEach(() => {
+      mockQuery.mockReset();
+    });
 
     beforeEach(() => {
       deferred = new Deferred<QueryResponse>();
       mockQuery.mockReturnValue(deferred.promise);
-    });
-    afterEach(() => {
-      mockQuery.mockReset();
     });
 
     describe("is called", () => {
@@ -45,6 +45,10 @@ describe("useQuery", () => {
       >;
       const onCompleted = jest.fn<void, [string]>();
       const onError = jest.fn<void, [any]>();
+      afterEach(() => {
+        onCompleted.mockReset();
+        onError.mockReset();
+      });
       beforeEach(() => {
         renderHookResult = renderHook<
           QueryOptionsWithVariables<QueryResponse, QueryVariables>,
@@ -60,10 +64,6 @@ describe("useQuery", () => {
             },
           }
         );
-      });
-      afterEach(() => {
-        onCompleted.mockReset();
-        onError.mockReset();
       });
       it("should start with loading set to true", async () => {
         expect(mockQuery).toHaveBeenCalledWith<[QueryVariables]>({
@@ -410,13 +410,13 @@ describe("useQuery", () => {
   describe("when an asyncronous query without variables", () => {
     let deferred: Deferred<string>;
     const mockQuery = jest.fn<Promise<string>, never>();
+    afterEach(() => {
+      mockQuery.mockReset();
+    });
 
     beforeEach(() => {
       deferred = new Deferred<string>();
       mockQuery.mockReturnValue(deferred.promise);
-    });
-    afterEach(() => {
-      mockQuery.mockReset();
     });
 
     describe("is called without variables", () => {
