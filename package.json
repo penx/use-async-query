@@ -4,7 +4,7 @@
   "description": "Apollo Client's useQuery API for any async function",
   "main": "index.js",
   "scripts": {
-    "test": "jest --coverage --listTests && tsd && npm run lint",
+    "test": "jest --coverage --verbose && tsd && npm run lint",
     "jest": "jest --verbose --coverage",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
