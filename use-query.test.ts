@@ -1,4 +1,5 @@
 import { renderHook, act, RenderHookResult } from "@testing-library/react";
+import React from "react";
 import {
   QueryOptions,
   QueryOptionsWithVariables,
@@ -425,6 +426,182 @@ describe("useQuery", () => {
         expect(renderHookResult.result.current.error).toBe(null);
         expect(renderHookResult.result.current.loading).toBe(true);
         expect(renderHookResult.result.current.data).toBe(null);
+      });
+    });
+  });
+
+  describe("when an asyncronous query with variables", () => {
+    type QueryVariables = { optionA: string; optionB: string };
+    type QueryResponse = string;
+    let deferred: Deferred<QueryResponse>;
+    const mockQuery = jest.fn<Promise<QueryResponse>, [QueryVariables]>();
+    afterEach(() => {
+      mockQuery.mockReset();
+    });
+
+    beforeEach(() => {
+      deferred = new Deferred<QueryResponse>();
+      mockQuery.mockReturnValue(deferred.promise);
+    });
+
+    describe("is called in React.StrictMode", () => {
+      let renderHookResult: RenderHookResult<
+        QueryResult<QueryResponse, QueryVariables>,
+        QueryOptionsWithVariables<QueryResponse, QueryVariables>
+      >;
+      const onCompleted = jest.fn<void, [string]>();
+      const onError = jest.fn<void, [any]>();
+      afterEach(() => {
+        onCompleted.mockReset();
+        onError.mockReset();
+      });
+      beforeEach(() => {
+        renderHookResult = renderHook<
+          QueryResult<QueryResponse, QueryVariables>,
+          QueryOptionsWithVariables<QueryResponse, QueryVariables>
+        >(
+          (options) =>
+            useQuery<QueryResponse, QueryVariables>(mockQuery, options),
+          {
+            initialProps: {
+              variables: { optionA: "run1-A", optionB: "run1-B" },
+              onCompleted,
+              onError,
+            },
+            wrapper: React.StrictMode,
+          }
+        );
+      });
+
+      describe("the query resolves", () => {
+        beforeEach(async () => {
+          await act(async () => {
+            deferred.resolve("resolved");
+          });
+        });
+        it("should call onCompleted with data returned from query", async () => {
+          expect(onCompleted).toHaveBeenCalledTimes(1);
+          expect(onCompleted).toHaveBeenCalledWith("resolved");
+        });
+
+        describe("the hook is called again with the same props", () => {
+          beforeEach(async () => {
+            await act(async () => {
+              renderHookResult.rerender({
+                variables: { optionA: "run1-A", optionB: "run1-B" },
+                onCompleted,
+                onError,
+              });
+            });
+          });
+          it("should not call onCompleted again", () => {
+            expect(onCompleted).toHaveBeenCalledTimes(1);
+          });
+        });
+
+        describe("is called with different variables", () => {
+          let deferred2: Deferred<string>;
+          beforeEach(() => {
+            deferred2 = new Deferred<string>();
+            mockQuery.mockReturnValue(deferred2.promise);
+            renderHookResult.rerender({
+              variables: { optionA: "run2-A", optionB: "run2-B" },
+            });
+          });
+
+          describe("the second query resolves", () => {
+            beforeEach(async () => {
+              await act(async () => {
+                deferred2.resolve("2nd resolved");
+              });
+            });
+
+            it("should return previousData from the first query", () => {
+              expect(renderHookResult.result.current.previousData).toBe(
+                "resolved"
+              );
+            });
+          });
+        });
+      });
+
+      describe("the query is rejected", () => {
+        beforeEach(async () => {
+          await act(async () => {
+            deferred.reject("rejected");
+          });
+        });
+
+        it("reports an error and calls onError", async () => {
+          expect(renderHookResult.result.current.error).toBe("rejected");
+          expect(onError).toHaveBeenCalledTimes(1);
+          expect(onError).toHaveBeenCalledWith("rejected");
+        });
+      });
+
+      describe("is called with different variables", () => {
+        let deferred2: Deferred<string>;
+        beforeEach(() => {
+          deferred2 = new Deferred<string>();
+          mockQuery.mockReturnValue(deferred2.promise);
+          renderHookResult.rerender({
+            variables: { optionA: "run2-A", optionB: "run2-B" },
+          });
+        });
+        describe("the first query rejects", () => {
+          beforeEach(async () => {
+            await act(async () => {
+              deferred.reject("rejected");
+            });
+          });
+          it("should not return an error or call onError", () => {
+            expect(renderHookResult.result.current.error).toBe(null);
+            expect(onError).toHaveBeenCalledTimes(0);
+          });
+        });
+      });
+    });
+
+    describe("is called with skip set to true in React.StrictMode", () => {
+      let renderHookResult: RenderHookResult<
+        QueryResult<QueryResponse, QueryVariables>,
+        QueryOptionsWithVariables<QueryResponse, QueryVariables>
+      >;
+      beforeEach(() => {
+        renderHookResult = renderHook<
+          QueryResult<QueryResponse, QueryVariables>,
+          QueryOptionsWithVariables<QueryResponse, QueryVariables>
+        >(
+          (options) =>
+            useQuery<QueryResponse, QueryVariables>(mockQuery, options),
+          {
+            initialProps: {
+              variables: { optionA: "run1-A", optionB: "run1-B" },
+              skip: true,
+            },
+            wrapper: React.StrictMode,
+          }
+        );
+      });
+      describe("is called again with skip not set", () => {
+        beforeEach(() => {
+          renderHookResult.rerender({
+            variables: { optionA: "run2-A", optionB: "run2-B" },
+          });
+        });
+        describe("the query resolves", () => {
+          beforeEach(async () => {
+            await act(async () => {
+              deferred.resolve("resolved");
+            });
+          });
+          it("should return with loading set to false", () => {
+            expect(mockQuery).toHaveBeenCalledTimes(1);
+            expect(renderHookResult.result.current.error).toBe(null);
+            expect(renderHookResult.result.current.loading).toBe(false);
+            expect(renderHookResult.result.current.data).toBe("resolved");
+          });
+        });
       });
     });
   });
