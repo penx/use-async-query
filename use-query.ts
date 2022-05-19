@@ -1,4 +1,4 @@
-import { useState, useRef, useMemo, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import { equal } from "@wry/equality";
 
 export type Variables = Record<string, any>;
@@ -117,9 +117,9 @@ function useQuery<TData, TVariables extends Variables>(
     [query, variables, onCompleted, onError]
   );
 
-  useMemo(async () => {
+  useEffect(() => {
     if (!skip) {
-      await fetch();
+      fetch();
     }
   }, [fetch, skip]);
 
