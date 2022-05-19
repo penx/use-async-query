@@ -1,8 +1,4 @@
-import {
-  renderHook,
-  act,
-  RenderHookResult,
-} from "@testing-library/react-hooks";
+import { renderHook, act, RenderHookResult } from "@testing-library/react";
 import {
   LazyQueryOptionsWithPartialVariables,
   LazyQueryOptionsWithVariables,
@@ -38,8 +34,8 @@ describe("useLazyQuery", () => {
 
     describe("is called with variables", () => {
       let renderHookResult: RenderHookResult<
-        LazyQueryOptionsWithVariables<string, { option: string }>,
-        LazyQueryResult<string, { option: string }>
+        LazyQueryResult<string, { option: string }>,
+        LazyQueryOptionsWithVariables<string, { option: string }>
       >;
       const onCompleted = jest.fn<void, [string]>();
       const onError = jest.fn<void, [any]>();
@@ -49,8 +45,8 @@ describe("useLazyQuery", () => {
       });
       beforeEach(() => {
         renderHookResult = renderHook<
-          LazyQueryOptionsWithVariables<string, { option: string }>,
-          LazyQueryResult<string, { option: string }>
+          LazyQueryResult<string, { option: string }>,
+          LazyQueryOptionsWithVariables<string, { option: string }>
         >(
           (options) =>
             useLazyQuery<string, { option: string }>(mockQuery, options),
@@ -69,7 +65,6 @@ describe("useLazyQuery", () => {
         expect(renderHookResult.result.current[1].error).toBe(null);
         expect(renderHookResult.result.current[1].loading).toBe(false);
         expect(renderHookResult.result.current[1].data).toBe(null);
-        expect(renderHookResult.result.all.length).toBe(1);
       });
       describe("refetch is called", () => {
         beforeEach(() => {
@@ -80,13 +75,11 @@ describe("useLazyQuery", () => {
         it("should call the query", () => {
           expect(mockQuery).toHaveBeenCalledWith({ option: "run2" });
           expect(mockQuery).toHaveBeenCalledTimes(1);
-          expect(renderHookResult.result.all.length).toBe(2);
         });
         it("should set loading to true", () => {
           expect(renderHookResult.result.current[1].error).toBe(null);
           expect(renderHookResult.result.current[1].loading).toBe(true);
           expect(renderHookResult.result.current[1].data).toBe(null);
-          expect(renderHookResult.result.all.length).toBe(2);
         });
         describe("the query resolves", () => {
           beforeEach(async () => {
@@ -99,7 +92,6 @@ describe("useLazyQuery", () => {
             expect(renderHookResult.result.current[1].error).toBe(null);
             expect(renderHookResult.result.current[1].loading).toBe(false);
             expect(renderHookResult.result.current[1].data).toBe("resolved");
-            expect(renderHookResult.result.all.length).toBe(3);
           });
         });
       });
@@ -115,13 +107,11 @@ describe("useLazyQuery", () => {
         it("should call the query", () => {
           expect(mockQuery).toHaveBeenCalledWith({ option: "run2" });
           expect(mockQuery).toHaveBeenCalledTimes(1);
-          expect(renderHookResult.result.all.length).toBe(2);
         });
         it("should set loading to true", () => {
           expect(renderHookResult.result.current[1].error).toBe(null);
           expect(renderHookResult.result.current[1].loading).toBe(true);
           expect(renderHookResult.result.current[1].data).toBe(null);
-          expect(renderHookResult.result.all.length).toBe(2);
         });
         describe("the query resolves", () => {
           beforeEach(async () => {
@@ -134,7 +124,6 @@ describe("useLazyQuery", () => {
             expect(renderHookResult.result.current[1].error).toBe(null);
             expect(renderHookResult.result.current[1].loading).toBe(false);
             expect(renderHookResult.result.current[1].data).toBe("resolved");
-            expect(renderHookResult.result.all.length).toBe(3);
           });
         });
         describe("the query rejects", () => {
@@ -146,7 +135,6 @@ describe("useLazyQuery", () => {
           it("should call onError and return the error", () => {
             expect(mockQuery).toHaveBeenCalledTimes(1);
             expect(onError).toHaveBeenCalledTimes(1);
-            expect(renderHookResult.result.all.length).toBe(3);
             expect(renderHookResult.result.current[1].error).toEqual(
               "some error"
             );
@@ -205,27 +193,28 @@ describe("useLazyQuery", () => {
     });
     describe("is called without options or variables", () => {
       let renderHookResult: RenderHookResult<
-        LazyQueryOptionsWithVariables<string, { option: string }>,
-        LazyQueryResultVariablesRequiredInRefetch<string, { option: string }>
+        LazyQueryResultVariablesRequiredInRefetch<string, { option: string }>,
+        LazyQueryOptionsWithVariables<string, { option: string }>
       >;
       beforeEach(() => {
         renderHookResult = renderHook<
-          LazyQueryOptionsWithVariables<string, { option: string }>,
-          LazyQueryResultVariablesRequiredInRefetch<string, { option: string }>
-        >(() => useLazyQuery<string, { option: string }>(mockQuery));
+          LazyQueryResultVariablesRequiredInRefetch<string, { option: string }>,
+          LazyQueryOptionsWithVariables<string, { option: string }>
+        >(() => useLazyQuery<string, { option: string }>(mockQuery), {
+          // wrapper: React.StrictMode,
+        });
       });
       it("should start with loading set to false", async () => {
         expect(mockQuery).toHaveBeenCalledTimes(0);
         expect(renderHookResult.result.current[1].error).toBe(null);
         expect(renderHookResult.result.current[1].loading).toBe(false);
         expect(renderHookResult.result.current[1].data).toBe(null);
-        expect(renderHookResult.result.all.length).toBe(1);
       });
     });
     describe("is called with options but no variables", () => {
       let renderHookResult: RenderHookResult<
-        LazyQueryOptionsWithVariables<string, { option: string }>,
-        LazyQueryResultVariablesRequiredInRefetch<string, { option: string }>
+        LazyQueryResultVariablesRequiredInRefetch<string, { option: string }>,
+        LazyQueryOptionsWithVariables<string, { option: string }>
       >;
       const onCompleted = jest.fn<void, [string]>();
       const onError = jest.fn<void, [any]>();
@@ -235,8 +224,8 @@ describe("useLazyQuery", () => {
       });
       beforeEach(() => {
         renderHookResult = renderHook<
-          LazyQueryOptionsWithPartialVariables<string, { option: string }>,
-          LazyQueryResultVariablesRequiredInRefetch<string, { option: string }>
+          LazyQueryResultVariablesRequiredInRefetch<string, { option: string }>,
+          LazyQueryOptionsWithPartialVariables<string, { option: string }>
         >(
           (options) =>
             useLazyQuery<string, { option: string }>(mockQuery, options),
@@ -253,7 +242,6 @@ describe("useLazyQuery", () => {
         expect(renderHookResult.result.current[1].error).toBe(null);
         expect(renderHookResult.result.current[1].loading).toBe(false);
         expect(renderHookResult.result.current[1].data).toBe(null);
-        expect(renderHookResult.result.all.length).toBe(1);
       });
     });
   });

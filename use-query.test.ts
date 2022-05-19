@@ -1,8 +1,4 @@
-import {
-  renderHook,
-  act,
-  RenderHookResult,
-} from "@testing-library/react-hooks";
+import { renderHook, act, RenderHookResult } from "@testing-library/react";
 import {
   QueryOptions,
   QueryOptionsWithVariables,
@@ -40,8 +36,8 @@ describe("useQuery", () => {
 
     describe("is called", () => {
       let renderHookResult: RenderHookResult<
-        QueryOptionsWithVariables<QueryResponse, QueryVariables>,
-        QueryResult<QueryResponse, QueryVariables>
+        QueryResult<QueryResponse, QueryVariables>,
+        QueryOptionsWithVariables<QueryResponse, QueryVariables>
       >;
       const onCompleted = jest.fn<void, [string]>();
       const onError = jest.fn<void, [any]>();
@@ -51,8 +47,8 @@ describe("useQuery", () => {
       });
       beforeEach(() => {
         renderHookResult = renderHook<
-          QueryOptionsWithVariables<QueryResponse, QueryVariables>,
-          QueryResult<QueryResponse, QueryVariables>
+          QueryResult<QueryResponse, QueryVariables>,
+          QueryOptionsWithVariables<QueryResponse, QueryVariables>
         >(
           (options) =>
             useQuery<QueryResponse, QueryVariables>(mockQuery, options),
@@ -73,7 +69,6 @@ describe("useQuery", () => {
         expect(renderHookResult.result.current.error).toBe(null);
         expect(renderHookResult.result.current.loading).toBe(true);
         expect(renderHookResult.result.current.data).toBe(null);
-        expect(renderHookResult.result.all.length).toBe(1);
       });
 
       describe("the query resolves", () => {
@@ -87,7 +82,6 @@ describe("useQuery", () => {
           expect(renderHookResult.result.current.error).toBe(null);
           expect(renderHookResult.result.current.loading).toBe(false);
           expect(renderHookResult.result.current.data).toBe("resolved");
-          expect(renderHookResult.result.all.length).toBe(2);
         });
         it("should call onCompleted with data returned from query", async () => {
           expect(onCompleted).toHaveBeenCalledTimes(1);
@@ -313,13 +307,13 @@ describe("useQuery", () => {
 
     describe("is called with skip set to true", () => {
       let renderHookResult: RenderHookResult<
-        QueryOptionsWithVariables<QueryResponse, QueryVariables>,
-        QueryResult<QueryResponse, QueryVariables>
+        QueryResult<QueryResponse, QueryVariables>,
+        QueryOptionsWithVariables<QueryResponse, QueryVariables>
       >;
       beforeEach(() => {
         renderHookResult = renderHook<
-          QueryOptionsWithVariables<QueryResponse, QueryVariables>,
-          QueryResult<QueryResponse, QueryVariables>
+          QueryResult<QueryResponse, QueryVariables>,
+          QueryOptionsWithVariables<QueryResponse, QueryVariables>
         >(
           (options) =>
             useQuery<QueryResponse, QueryVariables>(mockQuery, options),
@@ -336,7 +330,6 @@ describe("useQuery", () => {
         expect(renderHookResult.result.current.error).toBe(null);
         expect(renderHookResult.result.current.loading).toBe(false);
         expect(renderHookResult.result.current.data).toBe(null);
-        expect(renderHookResult.result.all.length).toBe(1);
       });
       describe("is called again with skip not set", () => {
         beforeEach(() => {
@@ -353,7 +346,6 @@ describe("useQuery", () => {
           expect(renderHookResult.result.current.error).toBe(null);
           expect(renderHookResult.result.current.loading).toBe(true);
           expect(renderHookResult.result.current.data).toBe(null);
-          expect(renderHookResult.result.all.length).toBe(2);
         });
         describe("the query resolves", () => {
           beforeEach(async () => {
@@ -366,7 +358,6 @@ describe("useQuery", () => {
             expect(renderHookResult.result.current.error).toBe(null);
             expect(renderHookResult.result.current.loading).toBe(false);
             expect(renderHookResult.result.current.data).toBe("resolved");
-            expect(renderHookResult.result.all.length).toBe(3);
           });
         });
       });
@@ -387,7 +378,6 @@ describe("useQuery", () => {
           expect(renderHookResult.result.current.error).toBe(null);
           expect(renderHookResult.result.current.loading).toBe(true);
           expect(renderHookResult.result.current.data).toBe(null);
-          expect(renderHookResult.result.all.length).toBe(2);
         });
         describe("the query resolves", () => {
           beforeEach(async () => {
@@ -400,7 +390,6 @@ describe("useQuery", () => {
             expect(renderHookResult.result.current.error).toBe(null);
             expect(renderHookResult.result.current.loading).toBe(false);
             expect(renderHookResult.result.current.data).toBe("resolved");
-            expect(renderHookResult.result.all.length).toBe(3);
           });
         });
       });
@@ -421,13 +410,13 @@ describe("useQuery", () => {
 
     describe("is called without variables", () => {
       let renderHookResult: RenderHookResult<
-        QueryOptions<string>,
-        QueryResult<string, never>
+        QueryResult<string, never>,
+        QueryOptions<string>
       >;
       beforeEach(() => {
         renderHookResult = renderHook<
-          QueryOptions<string>,
-          QueryResult<string, never>
+          QueryResult<string, never>,
+          QueryOptions<string>
         >(() => useQuery<string>(mockQuery));
       });
       it("should start with loading set to true", async () => {
@@ -436,7 +425,6 @@ describe("useQuery", () => {
         expect(renderHookResult.result.current.error).toBe(null);
         expect(renderHookResult.result.current.loading).toBe(true);
         expect(renderHookResult.result.current.data).toBe(null);
-        expect(renderHookResult.result.all.length).toBe(1);
       });
     });
   });
