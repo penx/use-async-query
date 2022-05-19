@@ -201,7 +201,6 @@ describe("useLazyQuery", () => {
           LazyQueryResultVariablesRequiredInRefetch<string, { option: string }>,
           LazyQueryOptionsWithVariables<string, { option: string }>
         >(() => useLazyQuery<string, { option: string }>(mockQuery), {
-          // wrapper: React.StrictMode,
         });
       });
       it("should start with loading set to false", async () => {
