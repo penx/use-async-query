@@ -1,6 +1,6 @@
 {
   "name": "use-async-query",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "Apollo Client's useQuery API for any async function",
   "module": "index.js",
   "main": "cjs/index.js",
