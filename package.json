@@ -2,13 +2,16 @@
   "name": "use-async-query",
   "version": "0.1.2",
   "description": "Apollo Client's useQuery API for any async function",
-  "main": "index.js",
+  "module": "index.js",
+  "main": "cjs/index.js",
   "scripts": {
     "test": "jest --coverage --verbose && tsd && npm run lint",
     "jest": "jest --verbose --coverage",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
-    "build": "tsc -p tsconfig.prod.json",
+    "build": "npm run build:ecm && npm run build:commonjs",
+    "build:ecm": "tsc -p tsconfig.prod.json",
+    "build:commonjs": "tsc -p tsconfig.commonjs.json",
     "lint": "eslint '**/*.ts'"
   },
   "author": "Alasdair McLeay",
