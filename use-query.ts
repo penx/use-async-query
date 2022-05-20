@@ -66,18 +66,24 @@ function useQuery<TData, TVariables extends Variables>(
   const variables = useMemoWhenEqual(passedVariables);
 
   const fetch: (
-    refetchVariables?: Partial<TVariables> | undefined
+    refetchVariables?: Partial<TVariables> | undefined,
+    internalOptions?: { skipPreviousData?: boolean }
   ) => Promise<QueryResult<TData, TVariables>> = useCallback(
-    async (refetchVariables: Partial<TVariables> | undefined) => {
+    async (
+      refetchVariables: Partial<TVariables> | undefined,
+      internalOptions
+    ) => {
       const mergedVariables = refetchVariables
         ? Object.assign({}, variables, refetchVariables)
         : variables;
       cancelLast.current?.();
       let isLatest = true;
-      previousData.current = data.current;
-      data.current = null;
-      loading.current = true;
-      error.current = null;
+      if (!internalOptions?.skipPreviousData) {
+        previousData.current = data.current;
+        data.current = null;
+        loading.current = true;
+        error.current = null;
+      }
       cancelLast.current = () => {
         isLatest = false;
       };
@@ -117,11 +123,25 @@ function useQuery<TData, TVariables extends Variables>(
     [query, variables, onCompleted, onError]
   );
 
+  const fetchChanged = useHasChanged(fetch);
+  const skipChanged = useHasChanged(skip);
+  const shouldRunFetch = (skipChanged || fetchChanged) && !skip;
+  const willRunFetch = useRef(false);
+  if (shouldRunFetch && !willRunFetch.current) {
+    previousData.current = data.current;
+    data.current = null;
+    loading.current = true;
+    error.current = null;
+    willRunFetch.current = true;
+  }
+
   useEffect(() => {
-    if (!skip) {
-      fetch();
+    // willRunFetch works around the double invocation of useEffect in React.StrictMode
+    if (shouldRunFetch && willRunFetch.current) {
+      fetch(undefined, { skipPreviousData: true });
+      willRunFetch.current = false;
     }
-  }, [fetch, skip]);
+  });
 
   const refetch = useCallback(
     (refetchVariables?: Partial<TVariables> | undefined) => {
@@ -140,5 +160,22 @@ function useQuery<TData, TVariables extends Variables>(
     refetch,
   };
 }
+
+// https://stackoverflow.com/a/68174829/1582783
+const useHasChanged = <T>(value: T) => {
+  const prevValue = usePrevious<T>(value);
+  return prevValue !== value;
+};
+// Note: in React.StrictMode under React 18, a functional component is invoked twice.
+// Both invocations will occure before resolving the useEffect.
+// This means sequential calls to usePrevious in the same render (before useEffect has resolved) can all return true.
+// We work around this by using `willRunFetch` above.
+const usePrevious = <T>(value: T) => {
+  const ref = useRef<T>();
+  useEffect(() => {
+    ref.current = value;
+  });
+  return ref.current;
+};
 
 export { useQuery };
