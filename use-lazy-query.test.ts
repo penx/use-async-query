@@ -21,7 +21,7 @@ class Deferred<T> {
 }
 
 describe("useLazyQuery", () => {
-  describe("when an asyncronous query with variables", () => {
+  describe("is given an asyncronous query with variables", () => {
     let deferred: Deferred<string>;
     const mockQuery = jest.fn<Promise<string>, [{ option: string }]>();
     afterEach(() => {
@@ -32,7 +32,7 @@ describe("useLazyQuery", () => {
       mockQuery.mockReturnValue(deferred.promise);
     });
 
-    describe("is called with variables", () => {
+    describe("the hook is rendered with variables", () => {
       let renderHookResult: RenderHookResult<
         LazyQueryResult<string, { option: string }>,
         LazyQueryOptionsWithVariables<string, { option: string }>
@@ -191,7 +191,7 @@ describe("useLazyQuery", () => {
         });
       });
     });
-    describe("is called without options or variables", () => {
+    describe("the hook is rendered without options or variables", () => {
       let renderHookResult: RenderHookResult<
         LazyQueryResultVariablesRequiredInRefetch<string, { option: string }>,
         LazyQueryOptionsWithVariables<string, { option: string }>
@@ -200,8 +200,7 @@ describe("useLazyQuery", () => {
         renderHookResult = renderHook<
           LazyQueryResultVariablesRequiredInRefetch<string, { option: string }>,
           LazyQueryOptionsWithVariables<string, { option: string }>
-        >(() => useLazyQuery<string, { option: string }>(mockQuery), {
-        });
+        >(() => useLazyQuery<string, { option: string }>(mockQuery), {});
       });
       it("should start with loading set to false", async () => {
         expect(mockQuery).toHaveBeenCalledTimes(0);
@@ -210,7 +209,7 @@ describe("useLazyQuery", () => {
         expect(renderHookResult.result.current[1].data).toBe(null);
       });
     });
-    describe("is called with options but no variables", () => {
+    describe("the hook is rendered with options but no variables", () => {
       let renderHookResult: RenderHookResult<
         LazyQueryResultVariablesRequiredInRefetch<string, { option: string }>,
         LazyQueryOptionsWithVariables<string, { option: string }>

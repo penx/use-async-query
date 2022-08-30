@@ -20,8 +20,8 @@ class Deferred<T> {
   }
 }
 
-describe("useQuery", () => {
-  describe("when an asyncronous query with variables", () => {
+describe("when useQuery", () => {
+  describe("is given an asyncronous query with variables", () => {
     type QueryVariables = { optionA: string; optionB: string };
     type QueryResponse = string;
     let deferred: Deferred<QueryResponse>;
@@ -35,7 +35,7 @@ describe("useQuery", () => {
       mockQuery.mockReturnValue(deferred.promise);
     });
 
-    describe("is called", () => {
+    describe("the hook is rendered", () => {
       let renderHookResult: RenderHookResult<
         QueryResult<QueryResponse, QueryVariables>,
         QueryOptionsWithVariables<QueryResponse, QueryVariables>
@@ -126,7 +126,7 @@ describe("useQuery", () => {
           });
         });
 
-        describe("the hook is called again with the same props", () => {
+        describe("the hook is rerendered with the same props", () => {
           beforeEach(async () => {
             await act(async () => {
               renderHookResult.rerender({
@@ -150,7 +150,7 @@ describe("useQuery", () => {
           });
         });
 
-        describe("is called with different variables", () => {
+        describe("the hook is rerendered with different variables", () => {
           let deferred2: Deferred<string>;
           beforeEach(() => {
             deferred2 = new Deferred<string>();
@@ -212,7 +212,7 @@ describe("useQuery", () => {
         });
       });
 
-      describe("is called with different variables", () => {
+      describe("the hook is rerendered with different variables", () => {
         let deferred2: Deferred<string>;
         beforeEach(() => {
           deferred2 = new Deferred<string>();
@@ -306,7 +306,7 @@ describe("useQuery", () => {
       });
     });
 
-    describe("is called with skip set to true", () => {
+    describe("the hook is rendered with skip set to true", () => {
       let renderHookResult: RenderHookResult<
         QueryResult<QueryResponse, QueryVariables>,
         QueryOptionsWithVariables<QueryResponse, QueryVariables>
@@ -332,7 +332,7 @@ describe("useQuery", () => {
         expect(renderHookResult.result.current.loading).toBe(false);
         expect(renderHookResult.result.current.data).toBe(null);
       });
-      describe("is called again with skip not set", () => {
+      describe("the hook is rerendered with skip not set", () => {
         beforeEach(() => {
           renderHookResult.rerender({
             variables: { optionA: "run2-A", optionB: "run2-B" },
@@ -368,7 +368,7 @@ describe("useQuery", () => {
             renderHookResult.result.current.refetch({ optionB: "run2-B" });
           });
         });
-        it("should call the query with merged variabls", () => {
+        it("should call the query with merged variables", () => {
           expect(mockQuery).toHaveBeenCalledWith({
             optionA: "run1-A",
             optionB: "run2-B",
@@ -397,7 +397,7 @@ describe("useQuery", () => {
     });
   });
 
-  describe("when an asyncronous query without variables", () => {
+  describe("is given an asyncronous query without variables", () => {
     let deferred: Deferred<string>;
     const mockQuery = jest.fn<Promise<string>, never>();
     afterEach(() => {
@@ -409,7 +409,7 @@ describe("useQuery", () => {
       mockQuery.mockReturnValue(deferred.promise);
     });
 
-    describe("is called without variables", () => {
+    describe("the hook is rendered without variables", () => {
       let renderHookResult: RenderHookResult<
         QueryResult<string, never>,
         QueryOptions<string>
@@ -444,7 +444,7 @@ describe("useQuery", () => {
       mockQuery.mockReturnValue(deferred.promise);
     });
 
-    describe("is called in React.StrictMode", () => {
+    describe("the hook is rendered in React.StrictMode", () => {
       let renderHookResult: RenderHookResult<
         QueryResult<QueryResponse, QueryVariables>,
         QueryOptionsWithVariables<QueryResponse, QueryVariables>
@@ -484,7 +484,7 @@ describe("useQuery", () => {
           expect(onCompleted).toHaveBeenCalledWith("resolved");
         });
 
-        describe("the hook is called again with the same props", () => {
+        describe("the hook is rerendered with the same props", () => {
           beforeEach(async () => {
             await act(async () => {
               renderHookResult.rerender({
@@ -499,7 +499,7 @@ describe("useQuery", () => {
           });
         });
 
-        describe("is called with different variables", () => {
+        describe("the hook is rerendered with different variables", () => {
           let deferred2: Deferred<string>;
           beforeEach(() => {
             deferred2 = new Deferred<string>();
@@ -539,7 +539,7 @@ describe("useQuery", () => {
         });
       });
 
-      describe("is called with different variables", () => {
+      describe("the hook is rerendered with different variables", () => {
         let deferred2: Deferred<string>;
         beforeEach(() => {
           deferred2 = new Deferred<string>();
@@ -562,7 +562,7 @@ describe("useQuery", () => {
       });
     });
 
-    describe("is called with skip set to true in React.StrictMode", () => {
+    describe("the hook is rendered with skip set to true in React.StrictMode", () => {
       let renderHookResult: RenderHookResult<
         QueryResult<QueryResponse, QueryVariables>,
         QueryOptionsWithVariables<QueryResponse, QueryVariables>
@@ -583,7 +583,7 @@ describe("useQuery", () => {
           }
         );
       });
-      describe("is called again with skip not set", () => {
+      describe("the hook is rerendered with skip not set", () => {
         beforeEach(() => {
           renderHookResult.rerender({
             variables: { optionA: "run2-A", optionB: "run2-B" },
