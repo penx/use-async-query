@@ -311,6 +311,12 @@ describe("when useQuery", () => {
         QueryResult<QueryResponse, QueryVariables>,
         QueryOptionsWithVariables<QueryResponse, QueryVariables>
       >;
+      const onCompleted = jest.fn<void, [string]>();
+      const onError = jest.fn<void, [any]>();
+      afterEach(() => {
+        onCompleted.mockReset();
+        onError.mockReset();
+      });
       beforeEach(() => {
         renderHookResult = renderHook<
           QueryResult<QueryResponse, QueryVariables>,
@@ -322,6 +328,8 @@ describe("when useQuery", () => {
             initialProps: {
               variables: { optionA: "run1-A", optionB: "run1-B" },
               skip: true,
+              onCompleted,
+              onError,
             },
           }
         );
@@ -336,6 +344,8 @@ describe("when useQuery", () => {
         beforeEach(() => {
           renderHookResult.rerender({
             variables: { optionA: "run2-A", optionB: "run2-B" },
+            onCompleted,
+            onError,
           });
         });
         it("should set loading to true", () => {
@@ -360,12 +370,20 @@ describe("when useQuery", () => {
             expect(renderHookResult.result.current.loading).toBe(false);
             expect(renderHookResult.result.current.data).toBe("resolved");
           });
+          it("should call onCompleted with data returned from query", async () => {
+            expect(onCompleted).toHaveBeenCalledTimes(1);
+            expect(onCompleted).toHaveBeenCalledWith("resolved");
+          });
         });
       });
       describe("refetch is called with partial variables", () => {
+        let refetchResultPromise: Promise<QueryResult<string, QueryVariables>>;
+        let refetchResult: QueryResult<string, QueryVariables>;
         beforeEach(() => {
           act(() => {
-            renderHookResult.result.current.refetch({ optionB: "run2-B" });
+            refetchResultPromise = renderHookResult.result.current.refetch({
+              optionB: "run2-B",
+            });
           });
         });
         it("should call the query with merged variables", () => {
@@ -385,12 +403,94 @@ describe("when useQuery", () => {
             await act(async () => {
               deferred.resolve("resolved");
             });
+            refetchResult = await refetchResultPromise;
           });
           it("should return with loading set to false", () => {
             expect(mockQuery).toHaveBeenCalledTimes(1);
             expect(renderHookResult.result.current.error).toBe(null);
             expect(renderHookResult.result.current.loading).toBe(false);
             expect(renderHookResult.result.current.data).toBe("resolved");
+            expect(refetchResult.error).toBe(null);
+            expect(refetchResult.loading).toBe(false);
+            expect(refetchResult.data).toBe("resolved");
+          });
+          describe("refetch is called from the previous refetch result, with partial variables", () => {
+            let deferred2: Deferred<string>;
+            beforeEach(() => {
+              deferred2 = new Deferred<string>();
+              mockQuery.mockReturnValue(deferred2.promise);
+              act(() => {
+                refetchResult.refetch({ optionB: "run3-B" });
+              });
+            });
+            it("should call the query with merged variables", () => {
+              expect(mockQuery).toHaveBeenCalledWith({
+                optionA: "run1-A",
+                optionB: "run3-B",
+              });
+              expect(mockQuery).toHaveBeenCalledTimes(2);
+            });
+            it("should set loading to true", () => {
+              expect(renderHookResult.result.current.error).toBe(null);
+              expect(renderHookResult.result.current.loading).toBe(true);
+              expect(renderHookResult.result.current.data).toBe(null);
+            });
+          });
+        });
+        describe("the query rejects", () => {
+          beforeEach(async () => {
+            await act(async () => {
+              deferred.reject("rejected");
+            });
+            refetchResult = await refetchResultPromise;
+          });
+          it("reports an error and calls onError", async () => {
+            expect(renderHookResult.result.current.error).toBe("rejected");
+            expect(onError).toHaveBeenCalledTimes(1);
+            expect(onError).toHaveBeenCalledWith("rejected");
+            expect(refetchResult.error).toBe("rejected");
+            expect(refetchResult.loading).toBe(false);
+            expect(refetchResult.data).toBe(null);
+          });
+          describe("refetch is called from the previous refetch result, with partial variables", () => {
+            let deferred2: Deferred<string>;
+            beforeEach(() => {
+              deferred2 = new Deferred<string>();
+              mockQuery.mockReturnValue(deferred2.promise);
+              act(() => {
+                refetchResult.refetch({ optionB: "run3-B" });
+              });
+            });
+            it("should call the query with merged variables", () => {
+              expect(mockQuery).toHaveBeenCalledWith({
+                optionA: "run1-A",
+                optionB: "run3-B",
+              });
+              expect(mockQuery).toHaveBeenCalledTimes(2);
+            });
+            it("should set loading to true", () => {
+              expect(renderHookResult.result.current.error).toBe(null);
+              expect(renderHookResult.result.current.loading).toBe(true);
+              expect(renderHookResult.result.current.data).toBe(null);
+            });
+
+            describe("the query resolves", () => {
+              beforeEach(async () => {
+                await act(async () => {
+                  deferred2.resolve("resolved");
+                });
+              });
+              it("should return with loading set to false", () => {
+                expect(mockQuery).toHaveBeenCalledTimes(2);
+                expect(renderHookResult.result.current.error).toBe(null);
+                expect(renderHookResult.result.current.loading).toBe(false);
+                expect(renderHookResult.result.current.data).toBe("resolved");
+              });
+              it("should call onCompleted with data returned from query", async () => {
+                expect(onCompleted).toHaveBeenCalledTimes(1);
+                expect(onCompleted).toHaveBeenCalledWith("resolved");
+              });
+            });
           });
         });
       });
