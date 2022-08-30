@@ -395,54 +395,6 @@ describe("when useQuery", () => {
         });
       });
     });
-  });
-
-  describe("is given an asyncronous query without variables", () => {
-    let deferred: Deferred<string>;
-    const mockQuery = jest.fn<Promise<string>, never>();
-    afterEach(() => {
-      mockQuery.mockReset();
-    });
-
-    beforeEach(() => {
-      deferred = new Deferred<string>();
-      mockQuery.mockReturnValue(deferred.promise);
-    });
-
-    describe("the hook is rendered without variables", () => {
-      let renderHookResult: RenderHookResult<
-        QueryResult<string, never>,
-        QueryOptions<string>
-      >;
-      beforeEach(() => {
-        renderHookResult = renderHook<
-          QueryResult<string, never>,
-          QueryOptions<string>
-        >(() => useQuery<string>(mockQuery));
-      });
-      it("should start with loading set to true", async () => {
-        expect(mockQuery).toHaveBeenCalled();
-        expect(mockQuery).toHaveBeenCalledTimes(1);
-        expect(renderHookResult.result.current.error).toBe(null);
-        expect(renderHookResult.result.current.loading).toBe(true);
-        expect(renderHookResult.result.current.data).toBe(null);
-      });
-    });
-  });
-
-  describe("when an asyncronous query with variables", () => {
-    type QueryVariables = { optionA: string; optionB: string };
-    type QueryResponse = string;
-    let deferred: Deferred<QueryResponse>;
-    const mockQuery = jest.fn<Promise<QueryResponse>, [QueryVariables]>();
-    afterEach(() => {
-      mockQuery.mockReset();
-    });
-
-    beforeEach(() => {
-      deferred = new Deferred<QueryResponse>();
-      mockQuery.mockReturnValue(deferred.promise);
-    });
 
     describe("the hook is rendered in React.StrictMode", () => {
       let renderHookResult: RenderHookResult<
@@ -602,6 +554,39 @@ describe("when useQuery", () => {
             expect(renderHookResult.result.current.data).toBe("resolved");
           });
         });
+      });
+    });
+  });
+
+  describe("is given an asyncronous query without variables", () => {
+    let deferred: Deferred<string>;
+    const mockQuery = jest.fn<Promise<string>, never>();
+    afterEach(() => {
+      mockQuery.mockReset();
+    });
+
+    beforeEach(() => {
+      deferred = new Deferred<string>();
+      mockQuery.mockReturnValue(deferred.promise);
+    });
+
+    describe("the hook is rendered without variables", () => {
+      let renderHookResult: RenderHookResult<
+        QueryResult<string, never>,
+        QueryOptions<string>
+      >;
+      beforeEach(() => {
+        renderHookResult = renderHook<
+          QueryResult<string, never>,
+          QueryOptions<string>
+        >(() => useQuery<string>(mockQuery));
+      });
+      it("should start with loading set to true", async () => {
+        expect(mockQuery).toHaveBeenCalled();
+        expect(mockQuery).toHaveBeenCalledTimes(1);
+        expect(renderHookResult.result.current.error).toBe(null);
+        expect(renderHookResult.result.current.loading).toBe(true);
+        expect(renderHookResult.result.current.data).toBe(null);
       });
     });
   });
