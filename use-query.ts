@@ -101,7 +101,11 @@ function useQuery<TData, TVariables extends Variables>(
             error: error.current,
             data: data.current,
             previousData: previousData.current,
-            refetch: fetch,
+            refetch: (refetchVariables?: Partial<TVariables> | undefined) => {
+              const result = fetch(refetchVariables);
+              forceUpdate((x) => x + 1);
+              return result;
+            },
           };
         })
         .catch((e) => {
@@ -116,7 +120,11 @@ function useQuery<TData, TVariables extends Variables>(
             error: e,
             data: data.current,
             previousData: previousData.current,
-            refetch: fetch,
+            refetch: (refetchVariables?: Partial<TVariables> | undefined) => {
+              const result = fetch(refetchVariables);
+              forceUpdate((x) => x + 1);
+              return result;
+            },
           };
         });
     },
